@@ -10,7 +10,12 @@ import {
 import { getAllProperties } from "@/lib/db/properties";
 import type { ExpenseEntry, Property } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { createNotification } from "@/lib/db/notifications";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 const initialDate = new Date();
 const initialForm: Omit<ExpenseEntry, "id" | "createdAt" | "updatedAt"> = {
@@ -33,6 +38,13 @@ export default function ExpensesPage() {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+  const { isMember } = useRole();
+
+  const getPropertyName = (id: string) => {
+    if (id === "other") return "Other Property/Expenses";
+    return properties.find(p => p.id === id)?.name || "Unknown Property";
+  };
   const [filters, setFilters] = useState({
     propertyId: "",
     monthKey: "",
@@ -64,16 +76,16 @@ export default function ExpensesPage() {
   }, []);
 
   const resetForm = () => {
-    const savedCategory = localStorage.getItem("lastExpenseCategory") || "";
-    const freshDate = new Date();
-    setForm({ 
+    setForm(prev => ({ 
       ...initialForm, 
-      category: savedCategory,
-      date: freshDate,
-      monthKey: `${freshDate.getFullYear()}-${String(freshDate.getMonth() + 1).padStart(2, "0")}`
-    });
+      propertyId: prev.propertyId, // 🏺 Remember Property
+      category: prev.category,    // 🏷️ Remember Category
+      date: prev.date,            // 📅 Remember Date
+      monthKey: prev.monthKey     // 🗓️ Remember Month
+    }));
     setEditId(null);
-    setIsModalOpen(false);
+    setError(null);
+    // 🚫 Do NOT close modal automatically (kept open for Power Entry)
   };
 
   const generateMonthKey = (date: Date) => {
@@ -107,8 +119,12 @@ export default function ExpensesPage() {
       setError("Amount must be greater than 0.");
       return false;
     }
-    if (form.category === "Other Expense" && (!form.description || form.description.trim() === "")) {
-      setError("Please provide a note defining what the 'Other' expense is.");
+    if ((form.category === "Other Expense" || form.category === "Utility") && (!form.description || form.description.trim() === "")) {
+      setError(`Please provide a note defining what the ${form.category === "Utility" ? "Utility" : "Other"} expense is.`);
+      return false;
+    }
+    if (form.propertyId === "other" && (!form.description || form.description.trim() === "")) {
+      setError("Please provide a note defining what the 'Other' property context is.");
       return false;
     }
     return true;
@@ -138,11 +154,25 @@ export default function ExpensesPage() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Added expense: ${form.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
+            "expense",
+            creatorName,
+            form.propertyId,
+            "/expenses"
+          );
+        }
       }
+      toast.success(editId ? "Entry updated" : "Entry added");
       await fetchData();
       resetForm();
-    } catch {
-      setError("Failed to save expense entry.");
+    } catch (error) {
+      console.error("Save error:", error);
+      setError("Failed to save entry.");
     } finally {
       setActionLoading(false);
     }
@@ -194,8 +224,6 @@ export default function ExpensesPage() {
     return { totalEntries, totalAmount };
   }, [filteredEntries]);
 
-  const getPropertyName = (id: string) => properties.find((p) => p.id === id)?.name ?? "Unknown";
-
   const uniqueMonths = useMemo(() => {
     const months = [...new Set(entries.map((e) => e.monthKey))];
     return months.sort().reverse();
@@ -208,13 +236,20 @@ export default function ExpensesPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Expenses</h2>
           <p className="text-sm text-slate-500 mt-1">Track operational costs and expenses.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-white hover:bg-rose-700 font-bold transition-all shadow-lg shadow-rose-200"
-        >
-          <Plus size={20} />
-          <span>Add Entry</span>
-        </button>
+        {isMember ? (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+          >
+            <Plus size={20} />
+            <span>Add Entry</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
+             <ShieldAlert size={16} />
+             <span>View Only Mode</span>
+          </div>
+        )}
       </header>
 
       {/* Summary Cards */}
@@ -295,6 +330,7 @@ export default function ExpensesPage() {
                     {property.name}
                   </option>
                 ))}
+                <option value="other">Other Property/Expenses</option>
               </select>
             </div>
 
@@ -302,7 +338,7 @@ export default function ExpensesPage() {
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
               <input
                 type="date"
-                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-sans"
                 value={form.date.toISOString().split("T")[0]}
                 onChange={(e) => handleDateChange(e.target.value)}
                 required
@@ -312,7 +348,7 @@ export default function ExpensesPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
               <select
-                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm"
                 value={form.category}
                 onChange={(e) => {
                   const category = e.target.value;
@@ -336,7 +372,7 @@ export default function ExpensesPage() {
                 type="number"
                 step="0.01"
                 min="0.01"
-                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-medium text-rose-600"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-black text-rose-600"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
                 required
@@ -344,32 +380,52 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          <div className={`transition-all duration-300 ${form.category === "Other Expense" ? "p-4 bg-rose-50 rounded-xl border border-rose-200" : ""}`}>
-            <label className={`block text-sm font-medium mb-1.5 ${form.category === "Other Expense" ? "text-rose-700" : "text-slate-700"}`}>
-              {form.category === "Other Expense" ? "Please define what this 'Other' expense is *" : "Description (Optional)"}
-            </label>
-            <textarea
-              className={`w-full rounded-lg border px-3 py-2.5 transition-all ${form.category === "Other Expense" ? "border-rose-300 focus:ring-rose-500 focus:border-rose-500 bg-white" : "focus:ring-indigo-500 focus:border-indigo-500"}`}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={form.category === "Other Expense" ? 2 : 3}
-              required={form.category === "Other Expense"}
-              placeholder={form.category === "Other Expense" ? "e.g. Broken window repair, Event catering..." : "Any detail about this expense..."}
-            />
-          </div>
+          {/* Dynamic Note Box for "Other" or "Utility" Selections */}
+          {(form.category === "Other Expense" || form.propertyId === "other" || form.category === "Utility") && (
+            <div className={`p-4 bg-rose-50 rounded-2xl border border-rose-200 animate-in slide-in-from-top-2 duration-300`}>
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 text-rose-700`}>
+                {form.category === "Utility" ? "Define Utility (Gas, Electric, Water, etc.) *" : `Define "${form.propertyId === "other" ? "Other Property" : "Other Expense"}" *`}
+              </label>
+              <textarea
+                className={`w-full rounded-xl border border-rose-300 px-4 py-3 focus:ring-rose-500 focus:border-rose-500 bg-white min-h-[100px] outline-none transition-all`}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                required
+                placeholder={
+                  form.category === "Utility" ? "e.g. Electric bill, Gas refill..." :
+                  form.propertyId === "other" ? "e.g. Community hall, Garage space..." : 
+                  "e.g. Broken window repair, Event catering..."
+                }
+              />
+            </div>
+          )}
 
-          <div className="flex gap-3 pt-2">
+          {/* Optional description for non-special categories */}
+          {form.category !== "Other Expense" && form.propertyId !== "other" && form.category !== "Utility" && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (Optional)</label>
+              <textarea
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={2}
+                placeholder="Any detail about this expense..."
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="submit"
               disabled={actionLoading}
-              className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
+              className="flex-1 rounded-[1.5rem] bg-indigo-600 px-6 py-4 text-white hover:bg-slate-900 font-black transition-all shadow-xl shadow-indigo-100 disabled:opacity-50 active:scale-95"
             >
-              {actionLoading ? "Saving..." : editId ? "Update Entry" : "Create Entry"}
+              {actionLoading ? "Saving..." : editId ? "Save Changes" : "Create Entry"}
             </button>
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-[1.5rem] bg-white border border-slate-200 px-6 py-4 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 font-bold transition-all"
             >
               Cancel
             </button>
@@ -391,43 +447,52 @@ export default function ExpensesPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-slate-200 text-slate-700">
-                  <tr>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Month</th>
-                    <th className="px-3 py-2">Property</th>
-                    <th className="px-3 py-2">Category</th>
-                    <th className="px-3 py-2">Description</th>
-                    <th className="px-3 py-2">Amount</th>
-                    <th className="px-3 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEntries.map((entry) => (
-                    <tr key={entry.id} className="border-b last:border-b-0">
-                      <td className="px-3 py-2">{entry.date.toLocaleDateString()}</td>
-                      <td className="px-3 py-2">{entry.monthKey}</td>
-                      <td className="px-3 py-2">{getPropertyName(entry.propertyId)}</td>
-                      <td className="px-3 py-2">{entry.category}</td>
-                      <td className="px-3 py-2">{entry.description || "-"}</td>
-                      <td className="px-3 py-2">{entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}</td>
-                      <td className="px-3 py-2 space-x-2">
-                        <button
-                          onClick={() => handleEdit(entry)}
-                          className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(entry.id)}
-                          className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                        >
-                          Delete
-                        </button>
-                      </td>
+                  <thead className="border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Date</th>
+                      <th className="px-6 py-4 text-left">Property</th>
+                      <th className="px-6 py-4 text-left">Category</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      {isMember && <th className="px-6 py-4 text-right pr-10">Actions</th>}
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium">{format(entry.date, 'MMM d, yyyy')}</td>
+                        <td className="px-6 py-4">{getPropertyName(entry.propertyId)}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                            {entry.category}
+                          </span>
+                          {entry.description && (
+                            <span className="ml-2 text-xs text-slate-500 italic">
+                               ({entry.description})
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-rose-600">
+                          {entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
+                        </td>
+                        {isMember && (
+                          <td className="px-6 py-4 text-right pr-10 space-x-2">
+                            <button
+                              onClick={() => handleEdit(entry)}
+                              className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(entry.id)}
+                              className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
               </table>
             </div>
           </div>

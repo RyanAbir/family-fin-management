@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/layout/Navigation";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -26,15 +29,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${outfit.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden" suppressHydrationWarning>
-        <div className="flex min-h-screen flex-col lg:flex-row">
-          <Navigation />
-          <main className="flex-1 lg:ml-72 p-4 md:p-6 lg:p-8 pt-6 lg:pt-8 transition-spacing duration-300">
-            {children}
-          </main>
-        </div>
+      <body className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden font-body" suppressHydrationWarning>
+        <AuthProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <div className="flex min-h-screen flex-col lg:flex-row">
+            <Navigation />
+            <main className="flex-1 lg:ml-0 lg:pl-72 p-4 md:p-6 lg:p-8 pt-6 lg:pt-8 transition-all duration-300">
+              {children}
+            </main>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

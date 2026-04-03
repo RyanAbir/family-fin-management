@@ -10,7 +10,11 @@ import {
 } from "@/lib/db/properties";
 import type { Property } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { createNotification } from "@/lib/db/notifications";
+import { toast } from "sonner";
 
 const initialForm: Omit<Property, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -28,6 +32,8 @@ export default function PropertiesPage() {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+  const { isMember } = useRole();
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -53,7 +59,6 @@ export default function PropertiesPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("Property submit started");
     e.preventDefault();
 
     if (!form.name || !form.type || !form.location) {
@@ -71,22 +76,45 @@ export default function PropertiesPage() {
           type: form.type,
           location: form.location,
           isActive: form.isActive,
+          updatedAt: new Date(),
         });
+
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Updated property: ${form.name}`,
+            "property",
+            creatorName,
+            undefined,
+            "/properties"
+          );
+        }
       } else {
         const payload = {
           ...form,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        console.log("Property form payload before Firestore write", payload);
-        const createdProperty = await createProperty(payload);
-        console.log("Property write success", createdProperty.id);
-        router.refresh();
+        await createProperty(payload);
+        
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Added property: ${form.name}`,
+            "property",
+            creatorName,
+            undefined,
+            "/properties"
+          );
+        }
       }
+      toast.success(editId ? "Property updated" : "Property created");
       await fetchProperties();
       resetForm();
     } catch (error) {
-      console.log("Property submit caught error", error);
+      console.error("Save error:", error);
       setError("Failed to save property.");
     } finally {
       setActionLoading(false);
@@ -111,6 +139,7 @@ export default function PropertiesPage() {
     setError(null);
     try {
       await deleteProperty(id);
+      toast.success("Property deleted");
       await fetchProperties();
     } catch {
       setError("Failed to delete property.");
@@ -129,13 +158,20 @@ export default function PropertiesPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Properties</h2>
           <p className="text-sm text-slate-500 mt-1">Manage property records.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
-        >
-          <Plus size={20} />
-          <span>Add Property</span>
-        </button>
+        {isMember ? (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+          >
+            <Plus size={20} />
+            <span>Add Property</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
+             <ShieldAlert size={16} />
+             <span>View Only Mode</span>
+          </div>
+        )}
       </header>
 
       {/* Property Modal */}
@@ -227,41 +263,49 @@ export default function PropertiesPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[600px]">
               <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-700">
-                <tr>
-                  <th className="px-3 py-2">Name</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Location</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {properties.map((property) => (
-                  <tr key={property.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-2">{property.name}</td>
-                    <td className="px-3 py-2">{property.type}</td>
-                    <td className="px-3 py-2">{property.location}</td>
-                    <td className={`px-3 py-2 text-xs font-semibold rounded-full ${statusClass(property.isActive)}`}>
-                      {property.isActive ? 'Active' : 'Inactive'}
-                    </td>
-                    <td className="px-3 py-2 space-x-2">
-                      <button
-                        onClick={() => handleEdit(property)}
-                        className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(property.id)}
-                        className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                  <thead className="border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Property Name</th>
+                      <th className="px-6 py-4 text-left">Type</th>
+                      <th className="px-6 py-4 text-left">Location</th>
+                      <th className="px-6 py-4 text-center">Status</th>
+                      {isMember && <th className="px-6 py-4 text-right pr-6">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {properties.map((property) => (
+                      <tr key={property.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">{property.name}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                            {property.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-500 italic text-sm">{property.location}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${statusClass(property.isActive)}`}>
+                            {property.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        {isMember && (
+                          <td className="px-6 py-4 text-right pr-6 space-x-2">
+                            <button
+                              onClick={() => handleEdit(property)}
+                              className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(property.id)}
+                              className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
               </table>
             </div>
           </div>

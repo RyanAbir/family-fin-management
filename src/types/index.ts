@@ -15,6 +15,10 @@ export interface FamilyMember {
   id: string;
   name: string;
   isActive: boolean;
+  relation: "son" | "daughter" | "mother" | "other";
+  gender?: "male" | "female";
+  linkedUid?: string;
+  linkedEmail?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,4 +78,44 @@ export interface MemberPayout {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type UserRole = "super_admin" | "admin" | "member" | "viewer" | "banned";
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  role: UserRole;
+  gender?: "male" | "female";
+  relation?: "son" | "daughter" | "mother" | "other";
+  familyMemberId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type NotificationType = "income" | "expense" | "payout" | "property" | "member" | "share";
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  type: NotificationType;
+  targetId?: string;
+  targetTab?: string;
+  creatorName: string;
+  readBy: string[]; // Array of UIDs
+  createdAt: Date;
+}
+
+export interface Invitation {
+  id: string;
+  token: string;
+  role: UserRole;
+  inviterUid: string;
+  inviterName: string;
+  expiresAt: Date;
+  used: boolean;
+  usedBy?: string; // UID
+  createdAt: Date;
 }

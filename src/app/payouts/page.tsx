@@ -10,7 +10,12 @@ import {
 import { getAllFamilyMembers } from "@/lib/db/familyMembers";
 import type { MemberPayout, FamilyMember } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { createNotification } from "@/lib/db/notifications";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 const initialDate = new Date();
 const initialForm: Omit<MemberPayout, "id" | "createdAt" | "updatedAt"> = {
@@ -30,6 +35,10 @@ export default function MemberPayoutsPage() {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+  const { isMember } = useRole();
+
+  const getMemberName = (id: string) => members.find(m => m.id === id)?.name || "Unknown Member";
   const [filters, setFilters] = useState({
     memberId: "",
     monthKey: "",
@@ -128,11 +137,25 @@ export default function MemberPayoutsPage() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Recorded payout: $${form.amount} for ${getMemberName(form.memberId)}`,
+            "payout",
+            creatorName,
+            undefined,
+            "/payouts"
+          );
+        }
       }
+      toast.success(editId ? "Payout updated" : "Payout recorded");
       await fetchData();
       resetForm();
-    } catch {
-      setError("Failed to save payout record.");
+    } catch (error) {
+      console.error("Save error:", error);
+      setError("Failed to save payout.");
     } finally {
       setActionLoading(false);
     }
@@ -183,8 +206,6 @@ export default function MemberPayoutsPage() {
     return { totalEntries, totalAmount };
   }, [filteredPayouts]);
 
-  const getMemberName = (id: string) => members.find((m) => m.id === id)?.name ?? "Unknown";
-
   const uniqueMonths = useMemo(() => {
     const months = [...new Set(payouts.map((e) => e.monthKey))];
     return months.sort().reverse();
@@ -197,13 +218,20 @@ export default function MemberPayoutsPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Member Payouts</h2>
           <p className="text-sm text-slate-500 mt-1">Record and track funds withdrawn by family members.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
-        >
-          <Plus size={20} />
-          <span>Record Payout</span>
-        </button>
+        {isMember ? (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+          >
+            <Plus size={20} />
+            <span>Record Payout</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
+             <ShieldAlert size={16} />
+             <span>View Only Mode</span>
+          </div>
+        )}
       </header>
 
       {/* Summary Cards */}
@@ -362,43 +390,41 @@ export default function MemberPayoutsPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium">Month</th>
-                  <th className="px-6 py-4 font-medium">Family Member</th>
-                  <th className="px-6 py-4 font-medium">Memo</th>
-                  <th className="px-6 py-4 font-medium text-right">Amount</th>
-                  <th className="px-6 py-4 font-medium text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPayouts.map((payout) => (
-                  <tr key={payout.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 text-slate-600">{payout.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-6 py-4 text-slate-500">{payout.monthKey}</td>
-                    <td className="px-6 py-4 font-semibold text-slate-800">{getMemberName(payout.memberId)}</td>
-                    <td className="px-6 py-4 text-slate-500 truncate max-w-[200px]">{payout.description || "-"}</td>
-                    <td className="px-6 py-4 font-bold text-rose-600 text-right">
-                      -{payout.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
-                    </td>
-                    <td className="px-6 py-4 space-x-2 text-center">
-                      <button
-                        onClick={() => handleEdit(payout)}
-                        className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(payout.id)}
-                        className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-100 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                  <thead className="border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Date</th>
+                      <th className="px-6 py-4 text-left">Family Member</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      {isMember && <th className="px-6 py-4 text-right pr-10">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredPayouts.map((payout) => (
+                      <tr key={payout.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium">{format(payout.date, 'MMM d, yyyy')}</td>
+                        <td className="px-6 py-4 font-bold text-slate-700">{getMemberName(payout.memberId)}</td>
+                        <td className="px-6 py-4 text-right font-bold text-indigo-600">
+                          {payout.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
+                        </td>
+                        {isMember && (
+                          <td className="px-6 py-4 text-right pr-10 space-x-2">
+                            <button
+                              onClick={() => handleEdit(payout)}
+                              className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(payout.id)}
+                              className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
             </table>
           </div>
         </div>

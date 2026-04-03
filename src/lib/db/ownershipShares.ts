@@ -14,7 +14,8 @@ import {
   DocumentData
 } from "firebase/firestore";
 import { db } from "../firebase";
-import type { OwnershipShare } from "../../types";
+import type { OwnershipShare, FamilyMember } from "../../types";
+import { calculateShariahPercentages } from "../utils/shariah";
 
 const ownershipShareConverter = {
   toFirestore: (share: Omit<OwnershipShare, 'id'>) => ({
@@ -77,4 +78,34 @@ export const updateOwnershipShare = async (id: string, updates: Partial<Omit<Own
 export const deleteOwnershipShare = async (id: string): Promise<void> => {
   const docRef = doc(ownershipSharesRef, id);
   await deleteDoc(docRef);
+};
+
+/**
+ * Ensures all members are linked to a property and redistributes shares based on Shariah rule.
+ */
+export const syncSharesForProperty = async (propertyId: string, allMembers: FamilyMember[]): Promise<void> => {
+  // 1. Get current shares
+  const currentShares = await getOwnershipSharesByProperty(propertyId);
+  const memberIdsWithShares = new Set(currentShares.map(s => s.memberId));
+
+  // 2. Add missing members (0% initial)
+  for (const member of allMembers) {
+    if (!memberIdsWithShares.has(member.id)) {
+      await createOwnershipShare({
+        propertyId,
+        memberId: member.id,
+        percentage: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  }
+
+  // 3. Fetch final list and redistribute
+  const finalShares = await getOwnershipSharesByProperty(propertyId);
+  const rebalanced = calculateShariahPercentages(finalShares, allMembers);
+
+  await Promise.all(rebalanced.map(item => 
+    updateOwnershipShare(item.id, { percentage: item.percentage })
+  ));
 };

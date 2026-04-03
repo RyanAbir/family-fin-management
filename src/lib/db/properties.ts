@@ -15,6 +15,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import type { Property } from "../../types";
+import { getActiveFamilyMembers } from "./familyMembers";
+import { syncSharesForProperty } from "./ownershipShares";
 
 const PROPERTIES_COLLECTION = "properties";
 
@@ -64,10 +66,15 @@ export const createProperty = async (property: Omit<Property, 'id'>): Promise<Pr
   console.log("createProperty: payload", payload);
   try {
     const docRef = await addDoc(propertiesRef, payload as Omit<Property, "id">);
-    console.log("createProperty: returned document id", docRef.id);
     const docSnap = await getDoc(docRef);
     const createdProperty = propertyConverter.fromFirestore(docSnap);
-    console.log("createProperty: property document created", createdProperty);
+    
+    // 🏆 Automation: Link all existing active members to this new property instantly
+    console.log("createProperty: triggering share auto-generation...");
+    const members = await getActiveFamilyMembers();
+    await syncSharesForProperty(createdProperty.id, members);
+
+    console.log("createProperty: property document created and shares synced", createdProperty);
     return createdProperty;
   } catch (error) {
     console.log("createProperty: failed to create property document", error);

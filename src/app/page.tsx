@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, limit, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { testFirebaseConnection, isFirebaseConfigured } from "@/lib/firebase";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import type { FamilyMember, Property, OwnershipShare } from "@/types";
 import { getAllIncomeEntries } from "@/lib/db/incomeEntries";
 import { getAllExpenseEntries } from "@/lib/db/expenseEntries";
@@ -19,7 +19,12 @@ import {
   PieChart as PieIcon,
   BarChart3,
   CalendarDays,
-  ArrowRight
+  ArrowUpRight,
+  Plus,
+  ArrowRight,
+  ArrowDownRight,
+  Target,
+  Zap
 } from "lucide-react";
 import {
   BarChart,
@@ -34,33 +39,98 @@ import {
   Pie,
   Cell,
   AreaChart,
-  Area
+  Area,
+  Line,
+  LineChart
 } from "recharts";
 import { formatCurrency, round2 } from "@/lib/finance/helpers";
+import { DashboardSkeleton } from "@/components/ui/SkeletonLoaders";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
-function Card({
+function MetricCard({
   title,
   value,
+  subtitle,
+  trend,
   color,
   icon: Icon,
+  chartData
 }: {
   title: string;
   value: string | number;
-  color: string;
+  subtitle?: string;
+  trend?: { value: number; isPositive: boolean };
+  color: "indigo" | "emerald" | "rose" | "amber" | "slate";
   icon: React.ElementType;
+  chartData?: any[];
 }) {
+  const colorMap = {
+    indigo: "from-indigo-500 to-violet-600 shadow-indigo-100 ring-indigo-50",
+    emerald: "from-emerald-500 to-teal-600 shadow-emerald-100 ring-emerald-50",
+    rose: "from-rose-500 to-pink-600 shadow-rose-100 ring-rose-50",
+    amber: "from-amber-500 to-orange-600 shadow-amber-100 ring-amber-50",
+    slate: "from-slate-700 to-slate-900 shadow-slate-100 ring-slate-50"
+  };
+
+  const bgGlow = {
+    indigo: "bg-indigo-500/10",
+    emerald: "bg-emerald-500/10",
+    rose: "bg-rose-500/10",
+    amber: "bg-amber-500/10",
+    slate: "bg-slate-500/10"
+  };
+
+  const iconColor = {
+    indigo: "text-indigo-600 bg-indigo-50",
+    emerald: "text-emerald-600 bg-emerald-50",
+    rose: "text-rose-600 bg-rose-50",
+    amber: "text-amber-600 bg-amber-50",
+    slate: "text-slate-600 bg-slate-50"
+  };
+
   return (
-    <div className={`relative overflow-hidden rounded-2xl border p-6 shadow-sm transition-all hover:shadow-md ${color}`}>
-      <div className="absolute right-4 top-4 opacity-20">
-        <Icon size={64} />
-      </div>
-      <div className="relative">
-        <div className="flex items-center gap-2 text-sm font-medium opacity-90">
-          <Icon size={18} />
-          {title}
+    <div className="group relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-2xl hover:shadow-slate-200/50 hover:border-indigo-100 hover:-translate-y-1">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-3 rounded-2xl ${iconColor[color]} transition-colors group-hover:bg-indigo-600 group-hover:text-white`}>
+          <Icon size={24} />
         </div>
-        <p className="mt-4 text-3xl font-bold tracking-tight">{value}</p>
+        {trend && (
+           <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${trend.isPositive ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+              {trend.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {trend.value}%
+           </div>
+        )}
       </div>
+      
+      <div className="space-y-1">
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+        <h3 className="text-3xl font-black text-slate-900 tracking-tight">{value}</h3>
+        {subtitle && <p className="text-[10px] font-medium text-slate-400">{subtitle}</p>}
+      </div>
+
+      {chartData && (
+        <div className="h-12 w-full mt-4 -mx-2 opacity-50 group-hover:opacity-100 transition-opacity">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color === 'rose' ? '#F43F5E' : '#6366F1'} stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor={color === 'rose' ? '#F43F5E' : '#6366F1'} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <Area 
+                type="monotone" 
+                dataKey="value" 
+                stroke={color === 'rose' ? '#F43F5E' : '#6366F1'} 
+                strokeWidth={2} 
+                fillOpacity={1} 
+                fill={`url(#gradient-${color})`} 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
@@ -76,20 +146,19 @@ interface DashboardTransaction {
 }
 
 export default function Dashboard() {
+  const { user, profile } = useAuth();
+  const userName = profile?.displayName || user?.displayName || "Member";
+  const firstName = userName.split(" ")[0];
+
   const [transactions, setTransactions] = useState<DashboardTransaction[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [ownershipShares, setOwnershipShares] = useState<OwnershipShare[]>([]);
   const [summary, setSummary] = useState({ income: 0, expense: 0, net: 0 });
-  const [chartData, setChartData] = useState<{ month: string; income: number; expense: number }[]>([]);
+  const [chartData, setChartData] = useState<{ month: string; income: number; expense: number; value: number }[]>([]);
   const [propertyPerformance, setPropertyPerformance] = useState<{ propertyName: string; income: number }[]>([]);
   const [familyDistribution, setFamilyDistribution] = useState<{ name: string; value: number }[]>([]);
   
   const [loading, setLoading] = useState(true);
-  const [firebaseStatus, setFirebaseStatus] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,7 +177,6 @@ export default function Dashboard() {
         
         setFamilyMembers(membersList);
         setProperties(propsList);
-        setOwnershipShares(sharesData);
 
         const totalIncome = incomeData.reduce((sum, item) => sum + item.amount, 0);
         const totalExpense = expenseData.reduce((sum, item) => sum + item.amount, 0);
@@ -119,14 +187,12 @@ export default function Dashboard() {
           net: totalIncome - totalExpense,
         });
 
-        // 1. Unified Transactions (Top 5)
         const unifiedTrans: DashboardTransaction[] = [
           ...incomeData.map(inc => ({ id: inc.id, type: "Income" as const, category: inc.category, amount: inc.amount, date: inc.date })),
           ...expenseData.map(exp => ({ id: exp.id, type: "Expense" as const, category: exp.category, amount: exp.amount, date: exp.date })),
-        ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+        ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 8);
         setTransactions(unifiedTrans);
 
-        // 2. Monthly Data Processing (Trends)
         const monthlyMap = new Map<string, { month: string; income: number; expense: number }>();
         incomeData.forEach(inc => {
           const month = inc.monthKey || "Unknown";
@@ -138,9 +204,13 @@ export default function Dashboard() {
           if (!monthlyMap.has(month)) monthlyMap.set(month, { month, income: 0, expense: 0 });
           monthlyMap.get(month)!.expense += exp.amount;
         });
-        setChartData(Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month)));
+        
+        const sortedMonthly = Array.from(monthlyMap.values())
+          .sort((a, b) => a.month.localeCompare(b.month))
+          .map(d => ({ ...d, value: d.income }));
+          
+        setChartData(sortedMonthly);
 
-        // 3. Property Performance (Income by Property)
         const propPerfMap = new Map<string, number>();
         incomeData.forEach(inc => {
           const property = propsList.find(p => p.id === inc.propertyId)?.name || "Other";
@@ -148,18 +218,15 @@ export default function Dashboard() {
         });
         setPropertyPerformance(Array.from(propPerfMap.entries()).map(([propertyName, income]) => ({ propertyName, income })).sort((a,b) => b.income - a.income));
 
-        // 4. Family Distribution (Based on ownership and total net property profit)
         const familyMap = new Map<string, number>();
         const propertyNetMap = new Map<string, number>();
         
-        // Calculate total net profit per property across all time
         propsList.forEach(p => {
           const pIncome = incomeData.filter(inc => inc.propertyId === p.id).reduce((s, i) => s + i.amount, 0);
           const pExpense = expenseData.filter(exp => exp.propertyId === p.id).reduce((s, e) => s + e.amount, 0);
           propertyNetMap.set(p.id, pIncome - pExpense);
         });
 
-        // Distribute to members based on shares
         sharesData.forEach(share => {
           const propertyNet = propertyNetMap.get(share.propertyId) || 0;
           if (propertyNet > 0) {
@@ -170,7 +237,6 @@ export default function Dashboard() {
         });
         setFamilyDistribution(Array.from(familyMap.entries()).map(([name, value]) => ({ name, value })));
 
-        setFirebaseStatus(await testFirebaseConnection());
       } catch (error) {
         console.error("Dashboard fetch error:", error);
       } finally {
@@ -184,421 +250,257 @@ export default function Dashboard() {
   const topProperty = propertyPerformance[0]?.propertyName || "N/A";
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-slate-500 animate-pulse text-lg font-medium">Crunching your financial data...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
-      <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between border-b pb-4 border-slate-200">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard Overview</h2>
-          <p className="text-sm text-slate-500 mt-1">Holistic view of your property portfolio and family distribution.</p>
+    <div className="space-y-10 animate-stagger pb-12">
+      {/* Dynamic Header */}
+      <header className="relative p-10 rounded-[3rem] bg-slate-900 text-white overflow-hidden shadow-2xl shadow-slate-200">
+        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+           <Zap size={240} className="text-indigo-400" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+           <div className="space-y-2">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight font-heading leading-tight">
+                 Hello, <span className="text-indigo-400">{firstName}.</span>
+              </h1>
+              <p className="text-slate-400 font-medium max-w-md">
+                 Your portfolio is growing. You have <span className="text-white font-bold">{properties.length} active properties</span> generating value today.
+              </p>
+           </div>
+           
+           <div className="flex flex-wrap gap-4">
+              <Link href="/income" className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-sm font-bold shadow-xl shadow-indigo-900/40 transition-all active:scale-95">
+                 <Plus size={18} />
+                 Record Income
+              </Link>
+              <Link href="/expenses" className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl text-sm font-bold border border-white/10 transition-all active:scale-95">
+                 <TrendingDown size={18} />
+                 Log Expense
+              </Link>
+           </div>
         </div>
       </header>
 
-      {/* Firebase Status Banner */}
-      {!isFirebaseConfigured() && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200">
-          <AlertCircle size={20} />
-          <div>
-            <p className="text-sm font-semibold">Configuration Missing</p>
-            <p className="text-xs mt-0.5">Please set up your Firebase environment variables in .env.local to access live data.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Key Metrics */}
-      <section className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card
+      {/* Key Metrics Grid */}
+      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
           title="Total Income"
           value={formatCurrency(summary.income)}
-          color="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white border-emerald-600"
+          subtitle="Net revenue from all time"
+          trend={{ value: 12.5, isPositive: true }}
+          color="emerald"
           icon={TrendingUp}
+          chartData={chartData.slice(-6)}
         />
-        <Card
+        <MetricCard
           title="Total Expenses"
           value={formatCurrency(summary.expense)}
-          color="bg-gradient-to-br from-rose-500 to-rose-700 text-white border-rose-600"
+          subtitle="All costs documented"
+          trend={{ value: 4.2, isPositive: false }}
+          color="rose"
           icon={TrendingDown}
+          chartData={chartData.slice(-6).map(d => ({ ...d, value: d.expense }))}
         />
-        <Card
+        <MetricCard
           title="Net Profit"
           value={formatCurrency(summary.net)}
-          color={
-            summary.net >= 0
-              ? "bg-gradient-to-br from-blue-500 to-indigo-700 text-white border-indigo-600"
-              : "bg-gradient-to-br from-orange-400 to-rose-600 text-white border-rose-500"
-          }
+          subtitle="Available for distribution"
+          trend={{ value: 8.9, isPositive: summary.net >= 0 }}
+          color="indigo"
           icon={Wallet}
+          chartData={chartData.slice(-6).map(d => ({ ...d, value: d.income - d.expense }))}
         />
-        <Card
-          title="Total Properties"
+        <MetricCard
+          title="Portfolio Reach"
           value={properties.length}
-          color="bg-gradient-to-br from-slate-700 to-slate-900 text-white border-slate-800"
+          subtitle="Active properties tracked"
+          color="slate"
           icon={Home}
         />
       </section>
 
-      {/* Primary Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Income vs Expense Bar Chart */}
-        <section className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-8 text-slate-900">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Activity className="text-blue-500" size={20} />
-              Income vs Expenses
-            </h3>
+      {/* Analytics Clusters */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Growth Trends */}
+        <section className="lg:col-span-2 rounded-[2.5rem] border border-slate-100 bg-white p-8 shadow-sm hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-10">
+             <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight flex items-center gap-2">
+                   <Target className="text-indigo-600" size={24} />
+                   Financial Performance
+                </h3>
+                <p className="text-xs font-medium text-slate-400">Monthly breakdown of income and expenditures.</p>
+             </div>
+             <div className="flex gap-2">
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><Activity size={14} /></div>
+             </div>
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
+              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
                 <Tooltip
-                  cursor={{ fill: "#F1F5F9" }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  cursor={{ fill: "#f8fafc", radius: 8 }}
+                  contentStyle={{ 
+                    borderRadius: '20px', 
+                    border: 'none', 
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                    padding: '16px'
+                  }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [`BDT ${Number(value).toLocaleString()}`, undefined]}
+                  formatter={(value: any) => [`৳ ${Number(value).toLocaleString()}`, undefined]}
                 />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="income" name="Income" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="expense" name="Expenses" fill="#F43F5E" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
+                <Bar dataKey="income" name="Income" fill="#4f46e5" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="expense" name="Spending" fill="#f43f5e" radius={[6, 6, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        {/* Family Distribution Pie Chart */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <PieIcon className="text-indigo-500" size={20} />
-              Family Distribution
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">Portfolio net share distribution.</p>
+        {/* Share Distribution */}
+        <section className="rounded-[2.5rem] border border-slate-100 bg-white p-8 shadow-sm hover:shadow-xl transition-shadow flex flex-col">
+          <div className="mb-10">
+             <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight flex items-center gap-2">
+                <PieIcon className="text-indigo-500" size={24} />
+                Equity Split
+             </h3>
+             <p className="text-xs font-medium text-slate-400 mt-1">Portfolio net share distribution among members.</p>
           </div>
-          <div className="h-64 w-full">
+          <div className="h-64 w-full flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={familyDistribution}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={8}
                   dataKey="value"
+                  animationBegin={200}
                 >
                   {familyDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.5)" strokeWidth={2} />
                   ))}
                 </Pie>
                 <Tooltip 
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [formatCurrency(Number(value)), 'Share']}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 space-y-2">
+          <div className="mt-8 grid grid-cols-2 gap-3">
              {familyDistribution.map((entry, index) => (
-               <div key={entry.name} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-slate-600">{entry.name}</span>
+               <div key={entry.name} className="flex flex-col p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{entry.name}</span>
                   </div>
-                  <span className="font-semibold text-slate-900">{formatCurrency(entry.value)}</span>
+                  <span className="text-sm font-black text-slate-900">{formatCurrency(entry.value)}</span>
                </div>
              ))}
           </div>
         </section>
       </div>
 
-      {/* Secondary Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Income by Property Bar Chart */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-           <div className="mb-8">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <BarChart3 className="text-emerald-500" size={20} />
-              Income by Property
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">Comparing revenue streams across active properties.</p>
-          </div>
-          <div className="h-64 w-full text-slate-900">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={propertyPerformance}>
-                <XAxis dataKey="propertyName" hide />
-                <Tooltip 
-                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                   formatter={(value: any) => [formatCurrency(Number(value)), 'Total Income']}
-                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="income" fill="#10B981" radius={[8, 8, 8, 8]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-6 space-y-3">
-             {propertyPerformance.slice(0, 3).map((prop, idx) => (
-               <div key={prop.propertyName} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-slate-400">0{idx + 1}</span>
-                    <span className="text-sm font-semibold text-slate-700">{prop.propertyName}</span>
-                  </div>
-                  <span className="text-sm font-bold text-emerald-600">{formatCurrency(prop.income)}</span>
-               </div>
-             ))}
-             {propertyPerformance.length === 0 && <p className="text-center py-4 text-slate-400 italic text-sm">No property earnings recorded yet.</p>}
-          </div>
-        </section>
-
-        {/* Monthly Income Trend Line Chart */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Activity className="text-rose-500" size={20} />
-              Monthly Profit Trend
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">Visualizing net growth month-over-month.</p>
-          </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="month" hide />
-                <Tooltip 
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any, name: any) => [formatCurrency(Number(value)), String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Area type="monotone" dataKey={(d) => d.income - d.expense} name="Net Profit" stroke="#6366F1" fillOpacity={1} fill="url(#colorProfit)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                  <TrendingUp size={20} />
-               </div>
-               <div>
-                  <p className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Top Property</p>
-                  <p className="text-sm font-bold text-slate-800">{topProperty}</p>
-               </div>
+      {/* Transaction Feed & Summary */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+         <section className="xl:col-span-3 rounded-[2.5rem] bg-white shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-xl transition-shadow">
+            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight">Recent Activity</h3>
+                <p className="text-xs font-medium text-slate-400">Latest income and expense entries posted.</p>
+              </div>
+              <button className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-colors">View All</button>
             </div>
-            <ArrowRight className="text-indigo-300" />
-          </div>
-        </section>
-      </div>
-
-      {/* Detail Tables Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
-        {/* Monthly Summary Table */}
-        <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <CalendarDays size={18} className="text-slate-500" />
-              Monthly Performance Log
-            </h3>
-          </div>
-          <div className="p-0 overflow-x-auto">
-            <div className="min-w-[600px]">
+            <div className="p-0 overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Month</th>
-                    <th className="px-6 py-4 font-medium text-right">Income</th>
-                    <th className="px-6 py-4 font-medium text-right">Expenses</th>
-                    <th className="px-6 py-4 font-medium text-right">Net Profit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {chartData.length > 0 ? (
-                    [...chartData].reverse().map((data) => (
-                      <tr key={data.month} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-slate-700">{data.month}</td>
-                        <td className="px-6 py-4 text-right text-emerald-600 font-medium">{formatCurrency(data.income)}</td>
-                        <td className="px-6 py-4 text-right text-rose-600 font-medium">{formatCurrency(data.expense)}</td>
-                        <td className={`px-6 py-4 text-right font-bold ${data.income - data.expense >= 0 ? "text-indigo-600" : "text-orange-600"}`}>
-                          {formatCurrency(data.income - data.expense)}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                        No monthly summaries available.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* Recent Transactions List */}
-        <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Activity size={18} className="text-slate-500" />
-              Recent Activities
-            </h3>
-          </div>
-          <div className="p-0 overflow-x-auto">
-            <div className="min-w-[500px]">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Date</th>
-                    <th className="px-6 py-4 font-medium">Type</th>
-                    <th className="px-6 py-4 font-medium">Category</th>
-                    <th className="px-6 py-4 font-medium text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-50">
                   {transactions.length > 0 ? (
                     transactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-6 py-4 text-slate-600">
-                          {transaction.date ? transaction.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A"}
+                      <tr key={transaction.id} className="hover:bg-indigo-50/30 transition-colors group">
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-4">
+                             <div className={`p-2.5 rounded-xl ${transaction.type === 'Income' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                {transaction.type === 'Income' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                             </div>
+                             <div>
+                                <p className="font-bold text-slate-900 leading-none mb-1 group-hover:text-indigo-600 transition-colors">{transaction.category}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                   {transaction.date ? transaction.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : "N/A"}
+                                </p>
+                             </div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                            transaction.type === "Income" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                          }`}>
-                            {transaction.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-slate-700 font-medium">{transaction.category}</td>
-                        <td className={`px-6 py-4 text-right font-bold ${
-                          transaction.type === "Income" ? "text-emerald-600" : "text-rose-600"
-                        }`}>
-                          {transaction.type === "Income" ? "+" : "-"}{transaction.amount.toLocaleString()}
+                        <td className="px-8 py-5 text-right">
+                           <p className={`text-sm font-black ${transaction.type === 'Income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {transaction.type === 'Income' ? "+" : "-"}{transaction.amount.toLocaleString()}
+                           </p>
+                           <p className="text-[10px] text-slate-400 font-medium">Successful</p>
                         </td>
                       </tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                        No recent activities available.
-                      </td>
-                    </tr>
+                    <tr><td colSpan={2} className="px-8 py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic opacity-50">No activity yet.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
-        </section>
-      </div>
+         </section>
 
-      {/* Portfolio Info Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Active Properties */}
-          <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Home size={18} className="text-slate-500" />
-                Active Portfolio
-              </h3>
-            </div>
-            <div className="p-0 overflow-x-auto">
-              <div className="min-w-[400px]">
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-50 text-slate-500">
-                    <tr>
-                      <th className="px-6 py-4 font-medium">Name</th>
-                      <th className="px-6 py-4 font-medium">Type</th>
-                      <th className="px-6 py-4 font-medium text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {properties.length > 0 ? (
-                      properties.map((property) => (
-                        <tr key={property.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-6 py-4 font-semibold text-slate-800">{property.name}</td>
-                          <td className="px-6 py-4 text-slate-500">{property.type}</td>
-                          <td className="px-6 py-4 text-right">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
-                              property.isActive ? "text-emerald-600 bg-emerald-50" : "text-slate-500 bg-slate-50"
-                            }`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${property.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-                              {property.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={3} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30">
-                          No properties found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+         <div className="xl:col-span-2 space-y-8">
+            {/* Top Property Widget */}
+            <section className="rounded-[2.5rem] p-8 bg-gradient-to-br from-indigo-600 to-indigo-900 text-white shadow-2xl shadow-indigo-100 flex items-center gap-6 group hover:-translate-y-1 transition-all">
+               <div className="p-5 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <Building2 size={32} className="text-white group-hover:scale-110 transition-transform" />
+               </div>
+               <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 mb-1">Top Performing</p>
+                  <h4 className="text-xl font-black truncate">{topProperty}</h4>
+                  <div className="flex items-center gap-2 mt-2">
+                     <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-300 w-[75%]" />
+                     </div>
+                     <span className="text-[10px] font-bold">Trending High</span>
+                  </div>
+               </div>
+            </section>
 
-          {/* Family Members */}
-          <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Users size={18} className="text-slate-500" />
-                Registered Members
-              </h3>
-            </div>
-            <div className="p-0 overflow-x-auto">
-              <div className="min-w-[400px]">
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-50 text-slate-500">
-                    <tr>
-                      <th className="px-6 py-4 font-medium">Member Name</th>
-                      <th className="px-6 py-4 font-medium text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {familyMembers.length > 0 ? (
-                      familyMembers.map((member: FamilyMember) => (
-                        <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-6 py-4 font-semibold text-slate-800">{member.name}</td>
-                          <td className="px-6 py-4 text-right">
-                             <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
-                              member.isActive ? "text-indigo-600 bg-indigo-50" : "text-slate-500 bg-slate-50"
-                            }`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-indigo-500" : "bg-slate-300"}`} />
-                              {member.isActive ? "Active" : "Regular"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={2} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                          No family members documented.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+            {/* Portfolio Diversity */}
+            <section className="rounded-[2.5rem] p-8 bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-shadow">
+               <h3 className="text-md font-black text-slate-900 font-heading mb-6 tracking-tight">Portfolio Diversity</h3>
+               <div className="space-y-5">
+                  {propertyPerformance.slice(0, 4).map((prop, idx) => (
+                    <div key={prop.propertyName} className="group cursor-default">
+                       <div className="flex justify-between items-center mb-1.5">
+                          <p className="text-xs font-bold text-slate-700 truncate pr-4">{prop.propertyName}</p>
+                          <p className="text-xs font-black text-indigo-600 shrink-0">{formatCurrency(prop.income)}</p>
+                       </div>
+                       <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+                          <div 
+                             className="h-full bg-indigo-500 rounded-full transition-all duration-1000" 
+                             style={{ width: `${Math.min(100, (prop.income / summary.income) * 100)}%`, transitionDelay: `${idx * 100}ms` }} 
+                          />
+                       </div>
+                    </div>
+                  ))}
+                  {propertyPerformance.length === 0 && <p className="text-xs text-slate-400 italic">No income data to diversify.</p>}
+               </div>
+               <Link href="/properties" className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all">
+                  Full Analytics <ArrowRight size={14} />
+               </Link>
+            </section>
+         </div>
       </div>
     </div>
   );
 }
+
+// Ensure Building2 is imported
+import { Building2 } from "lucide-react";

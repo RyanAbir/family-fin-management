@@ -10,14 +10,18 @@ import {
 import { getAllProperties } from "@/lib/db/properties";
 import type { IncomeEntry, Property } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { createNotification } from "@/lib/db/notifications";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
-const initialDate = new Date();
-const initialForm: Omit<IncomeEntry, "id" | "createdAt" | "updatedAt"> = {
+const initialForm = {
   propertyId: "",
-  date: initialDate,
-  monthKey: `${initialDate.getFullYear()}-${String(initialDate.getMonth() + 1).padStart(2, "0")}`,
-  category: "",
+  date: new Date(),
+  monthKey: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
+  category: "Rent",
   description: "",
   amount: 0,
 };
@@ -33,6 +37,10 @@ export default function IncomePage() {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+  const { isMember } = useRole();
+
+  const getPropertyName = (id: string) => properties.find(p => p.id === id)?.name || "Unknown Property";
   const [filters, setFilters] = useState({
     propertyId: "",
     monthKey: "",
@@ -64,16 +72,16 @@ export default function IncomePage() {
   }, []);
 
   const resetForm = () => {
-    const savedCategory = localStorage.getItem("lastIncomeCategory") || "";
-    const freshDate = new Date();
-    setForm({ 
+    setForm(prev => ({ 
       ...initialForm, 
-      category: savedCategory,
-      date: freshDate,
-      monthKey: `${freshDate.getFullYear()}-${String(freshDate.getMonth() + 1).padStart(2, "0")}`
-    });
+      propertyId: prev.propertyId, // 🏺 Remember Property
+      date: prev.date,             // 📅 Remember Date
+      monthKey: prev.monthKey,     // 🗓️ Remember Month
+      category: prev.category      // 🏷️ Remember Category
+    }));
     setEditId(null);
-    setIsModalOpen(false);
+    setError(null);
+    // 🚫 Do NOT close modal automatically (kept open for Power Entry)
   };
 
   const generateMonthKey = (date: Date) => {
@@ -138,11 +146,25 @@ export default function IncomePage() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+        
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Added income: ${form.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
+            "income",
+            creatorName,
+            form.propertyId,
+            "/income"
+          );
+        }
       }
+      toast.success(editId ? "Entry updated" : "Entry added");
       await fetchData();
       resetForm();
-    } catch {
-      setError("Failed to save income entry.");
+    } catch (error) {
+      console.error("Save error:", error);
+      setError("Failed to save entry.");
     } finally {
       setActionLoading(false);
     }
@@ -194,8 +216,6 @@ export default function IncomePage() {
     return { totalEntries, totalAmount };
   }, [filteredEntries]);
 
-  const getPropertyName = (id: string) => properties.find((p) => p.id === id)?.name ?? "Unknown";
-
   const uniqueMonths = useMemo(() => {
     const months = [...new Set(entries.map((e) => e.monthKey))];
     return months.sort().reverse();
@@ -208,13 +228,20 @@ export default function IncomePage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Income</h2>
           <p className="text-sm text-slate-500 mt-1">Track rental income and other revenue.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
-        >
-          <Plus size={20} />
-          <span>Add Entry</span>
-        </button>
+        {isMember ? (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+          >
+            <Plus size={20} />
+            <span>Add Entry</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
+             <ShieldAlert size={16} />
+             <span>View Only Mode</span>
+          </div>
+        )}
       </header>
 
       {/* Summary Cards */}
@@ -391,43 +418,52 @@ export default function IncomePage() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-700">
-                <tr>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Month</th>
-                  <th className="px-3 py-2">Property</th>
-                  <th className="px-3 py-2">Category</th>
-                  <th className="px-3 py-2">Description</th>
-                  <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-2">{entry.date.toLocaleDateString()}</td>
-                    <td className="px-3 py-2">{entry.monthKey}</td>
-                    <td className="px-3 py-2">{getPropertyName(entry.propertyId)}</td>
-                    <td className="px-3 py-2">{entry.category}</td>
-                    <td className="px-3 py-2">{entry.description || "-"}</td>
-                    <td className="px-3 py-2">{entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}</td>
-                    <td className="px-3 py-2 space-x-2">
-                      <button
-                        onClick={() => handleEdit(entry)}
-                        className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                  <thead className="border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Date</th>
+                      <th className="px-6 py-4 text-left">Property</th>
+                      <th className="px-6 py-4 text-left">Category</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      {isMember && <th className="px-6 py-4 text-right pr-10">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium">{format(entry.date, 'MMM d, yyyy')}</td>
+                        <td className="px-6 py-4">{getPropertyName(entry.propertyId)}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                            {entry.category}
+                          </span>
+                          {entry.description && (
+                            <span className="ml-2 text-xs text-slate-500 italic">
+                               ({entry.description})
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-emerald-600">
+                          {entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
+                        </td>
+                        {isMember && (
+                          <td className="px-6 py-4 text-right pr-10 space-x-2">
+                            <button
+                              onClick={() => handleEdit(entry)}
+                              className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(entry.id)}
+                              className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
             </table>
           </div>
         </div>

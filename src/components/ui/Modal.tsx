@@ -41,26 +41,29 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={handleBackdropClick}
     >
       <div 
         ref={modalRef}
-        className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+        className="relative w-full max-w-xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-4 sm:zoom-in-95 duration-500"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="text-xl font-bold text-slate-900">{title}</h3>
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 bg-white">
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold text-slate-900 font-heading tracking-tight">{title}</h3>
+            <div className="w-8 h-1 bg-indigo-600 rounded-full" />
+          </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="p-2.5 rounded-2xl text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
           >
             <X size={20} />
           </button>
-        </div>
+        </div> 
 
         {/* Content */}
-        <div className="p-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-8 max-h-[85vh] overflow-y-auto bg-slate-50/20">
           {children}
         </div>
       </div>

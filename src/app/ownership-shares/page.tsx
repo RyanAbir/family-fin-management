@@ -9,9 +9,15 @@ import {
 } from "@/lib/db/ownershipShares";
 import { getAllProperties } from "@/lib/db/properties";
 import { getAllFamilyMembers } from "@/lib/db/familyMembers";
+import { calculateShariahPercentages } from "@/lib/utils/shariah";
 import type { OwnershipShare, Property, FamilyMember } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { formatCurrency, round2 } from "@/lib/finance/helpers";
+import { Plus, ShieldAlert, Scale } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { createNotification } from "@/lib/db/notifications";
+import { toast } from "sonner";
 
 const initialForm: Omit<OwnershipShare, "id" | "createdAt" | "updatedAt"> = {
   propertyId: "",
@@ -29,6 +35,11 @@ export default function OwnershipSharesPage() {
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+  const { isMember } = useRole();
+
+  const getPropertyName = (id: string) => properties.find((p) => p.id === id)?.name ?? "Unknown Property";
+  const getMemberName = (id: string) => members.find((m) => m.id === id)?.name ?? "Unknown Member";
 
   const fetchData = async () => {
     setLoading(true);
@@ -109,12 +120,25 @@ export default function OwnershipSharesPage() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Trigger notification
+        if (profile) {
+          const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
+          await createNotification(
+            `Added share: ${form.percentage}% for ${getMemberName(form.memberId)} in ${getPropertyName(form.propertyId)}`,
+            "share",
+            creatorName,
+            undefined,
+            "/ownership-shares"
+          );
+        }
       }
+      toast.success(editId ? "Share updated" : "Share created");
       await fetchData();
       resetForm();
     } catch (error) {
-      console.error("Save ownership error:", error);
-      setError(`Failed to save ownership share: ${error instanceof Error ? error.message : "Unknown"}`);
+      console.error("Save error:", error);
+      setError("Failed to save ownership share.");
     } finally {
       setActionLoading(false);
     }
@@ -162,8 +186,36 @@ export default function OwnershipSharesPage() {
     );
   }, [sharesByProperty]);
 
-  const getPropertyName = (id: string) => properties.find((p) => p.id === id)?.name ?? "Unknown";
-  const getMemberName = (id: string) => members.find((m) => m.id === id)?.name ?? "Unknown";
+  const handleShariahDistribution = async (propertyId: string) => {
+    const propertyShares = sharesByProperty[propertyId] || [];
+    if (!confirm("This will redistribute all current shares for this property based on the Islamic 2:1 son-to-daughter/mother rule. Continue?")) return;
+
+    setActionLoading(true);
+    try {
+      const rebalanced = calculateShariahPercentages(propertyShares, members);
+
+      if (rebalanced.length === 0) {
+        toast.error("No valid members found for distribution.");
+        return;
+      }
+
+      // 2. Redistribute
+      await Promise.all(rebalanced.map(item => 
+        updateOwnershipShare(item.id, { 
+          percentage: item.percentage,
+          updatedAt: new Date()
+        } as any)
+      ));
+
+      toast.success("Shariah distribution applied successfully!");
+      fetchData();
+    } catch (err) {
+      console.error("Error distributing shares:", err);
+      toast.error("Failed to apply Shariah distribution.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -172,13 +224,20 @@ export default function OwnershipSharesPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ownership Shares</h2>
           <p className="text-sm text-slate-500 mt-1">Manage ownership shares by property and member.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
-        >
-          <Plus size={20} />
-          <span>Add Share</span>
-        </button>
+        {isMember ? (
+          <button 
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+          >
+            <Plus size={20} />
+            <span>Add Share</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
+             <ShieldAlert size={16} />
+             <span>View Only Mode</span>
+          </div>
+        )}
       </header>
 
       {/* Share Modal */}
@@ -271,16 +330,34 @@ export default function OwnershipSharesPage() {
             {Object.entries(sharesByProperty).map(([propertyId, propertyShares]) => {
               const total = totalByProperty[propertyId] ?? 0;
               return (
-                <div key={propertyId} className="rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold">{getPropertyName(propertyId)}</h4>
-                    <span className="text-xs font-semibold text-slate-600">
-                      Total: {total.toFixed(2)}%
-                    </span>
+                <div key={propertyId} className="rounded-3xl border border-slate-200 p-6 bg-slate-50/50 hover:bg-white hover:shadow-2xl hover:shadow-slate-200 transition-all group/prop">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                       <h4 className="text-xl font-black text-slate-900 font-heading tracking-tight">{getPropertyName(propertyId)}</h4>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Property Ledger</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <span className={`text-xs font-black px-4 py-2 rounded-xl ${total === 100 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                         Total Allocation: {total.toFixed(2)}%
+                       </span>
+                       {isMember && (
+                          <button
+                            onClick={() => handleShariahDistribution(propertyId)}
+                            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.15em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 hover:shadow-indigo-100 active:scale-95"
+                            title="Distribute by Islamic Rule (2:1 Male:Female)"
+                          >
+                            <Scale size={14} />
+                            Shariah Rule
+                          </button>
+                       )}
+                    </div>
                   </div>
 
                   {total !== 100 && (
-                    <p className="mb-2 text-xs text-amber-700 bg-amber-100 p-2 rounded">Total ownership for this property is {total.toFixed(2)}%, not 100%.</p>
+                    <div className="mb-6 flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100/50 text-amber-700">
+                       <ShieldAlert size={18} />
+                       <p className="text-xs font-bold font-heading">The total ownership for this property is currently {total.toFixed(2)}%. It must reach 100% for accurate distribution.</p>
+                    </div>
                   )}
 
                   <div className="overflow-x-auto">
@@ -298,20 +375,22 @@ export default function OwnershipSharesPage() {
                             <tr key={share.id} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
                               <td className="px-3 py-3 font-semibold text-slate-700">{getMemberName(share.memberId)}</td>
                               <td className="px-3 py-3 font-bold text-indigo-600 text-right">{share.percentage.toFixed(2)}%</td>
-                              <td className="px-3 py-3 text-right pr-6 space-x-2">
-                                <button
-                                  onClick={() => handleEdit(share)}
-                                  className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(share.id)}
-                                  className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
-                                >
-                                  Delete
-                                </button>
-                              </td>
+                              {isMember && (
+                                <td className="px-3 py-3 text-right pr-6 space-x-2">
+                                  <button
+                                    onClick={() => handleEdit(share)}
+                                    className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(share.id)}
+                                    className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           ))}
                         </tbody>

@@ -15,6 +15,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import type { FamilyMember } from "../../types";
+import { getAllProperties } from "./properties";
+import { syncSharesForProperty } from "./ownershipShares";
 
 const FAMILY_MEMBERS_COLLECTION = "family_members";
 
@@ -40,22 +42,31 @@ const familyMembersRef = collection(db, FAMILY_MEMBERS_COLLECTION).withConverter
 // CRUD operations
 export const createFamilyMember = async (member: Omit<FamilyMember, 'id'>): Promise<FamilyMember> => {
   const payload: Omit<FamilyMember, "id"> = {
-    name: member.name,
-    isActive: member.isActive,
-    createdAt: member.createdAt,
-    updatedAt: member.updatedAt,
+    ...member,
+    createdAt: member.createdAt || new Date(),
+    updatedAt: member.updatedAt || new Date(),
   };
 
   console.log("createFamilyMember: collection", FAMILY_MEMBERS_COLLECTION);
   console.log("createFamilyMember: payload", payload);
   try {
     const docRef = await addDoc(familyMembersRef, payload);
-    console.log("createFamilyMember: returned document id", docRef.id);
     const createdMember: FamilyMember = {
       id: docRef.id,
       ...payload,
     };
-    console.log("createFamilyMember: family member document created", createdMember);
+
+    // 🏆 Automation: Link new member to all existing properties instantly
+    console.log("createFamilyMember: triggering share auto-generation...");
+    const properties = await getAllProperties();
+    const allMembers = await getAllFamilyMembers(); // Need all for Shariah math
+    
+    // Use for loop with await for sequential sync (safer for Firestore)
+    for (const prop of properties) {
+      await syncSharesForProperty(prop.id, allMembers);
+    }
+
+    console.log("createFamilyMember: family member document created and shares synced", createdMember);
     return createdMember;
   } catch (error) {
     console.log("createFamilyMember: failed to create family member document", error);
