@@ -206,7 +206,8 @@ export default function PropertiesPage() {
           <p>No properties found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+            <div className="min-w-[600px]">
+              <table className="min-w-full text-left text-sm">
               <thead className="border-b border-slate-200 text-slate-700">
                 <tr>
                   <th className="px-3 py-2">Name</th>
@@ -242,7 +243,8 @@ export default function PropertiesPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
       </section>

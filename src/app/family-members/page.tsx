@@ -44,7 +44,6 @@ export default function FamilyMembersPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("Family member submit started");
     e.preventDefault();
 
     if (!form.name) {
@@ -62,19 +61,15 @@ export default function FamilyMembersPage() {
           isActive: form.isActive,
         });
       } else {
-        const payload = {
+        await createFamilyMember({
           ...form,
           createdAt: new Date(),
           updatedAt: new Date(),
-        };
-        console.log("Family member form payload before Firestore write", payload);
-        const createdMember = await createFamilyMember(payload);
-        console.log("Family member write success", createdMember.id);
+        });
       }
       await fetchMembers();
       resetForm();
     } catch (error) {
-      console.log("Family member submit caught error", error);
       setError("Failed to save family member.");
     } finally {
       setActionLoading(false);
@@ -166,39 +161,43 @@ export default function FamilyMembersPage() {
           <p>No family members found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-700">
-                <tr>
-                  <th className="px-3 py-2">Name</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-2">{member.name}</td>
-                    <td className={`px-3 py-2 text-xs font-semibold rounded-full ${statusClass(member.isActive)}`}>
-                      {member.isActive ? "Active" : "Inactive"}
-                    </td>
-                    <td className="px-3 py-2 space-x-2">
-                      <button
-                        onClick={() => handleEdit(member)}
-                        className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(member.id)}
-                        className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            <div className="min-w-[400px]">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-slate-200 text-slate-700">
+                  <tr>
+                    <th className="px-3 py-2">Name</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {members.map((member) => (
+                    <tr key={member.id} className="border-b last:border-b-0">
+                      <td className="px-3 py-2 font-medium">{member.name}</td>
+                      <td className="px-3 py-2">
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusClass(member.isActive)}`}>
+                          {member.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right space-x-2">
+                        <button
+                          onClick={() => handleEdit(member)}
+                          className="rounded-md border border-blue-500 px-2 py-1 text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(member.id)}
+                          className="rounded-md border border-rose-500 px-2 py-1 text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>

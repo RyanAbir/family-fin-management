@@ -348,7 +348,8 @@ export default function MemberPayoutsPage() {
           <p className="p-6 text-slate-500 text-center italic py-12">No payout records found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
+            <div className="min-w-[800px]">
+              <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4 font-medium">Date</th>
@@ -388,6 +389,7 @@ export default function MemberPayoutsPage() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
       </section>
     </div>

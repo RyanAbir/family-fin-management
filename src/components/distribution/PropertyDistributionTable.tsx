@@ -22,7 +22,8 @@ export function PropertyDistributionTable({
         </h3>
       </div>
       <div className="p-0 overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
+        <div className="min-w-[600px]">
+          <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-6 py-4 font-medium">Property</th>
@@ -73,6 +74,7 @@ export function PropertyDistributionTable({
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }

@@ -212,7 +212,7 @@ export default function Dashboard() {
       )}
 
       {/* Key Metrics */}
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           title="Total Income"
           value={formatCurrency(summary.income)}
@@ -415,36 +415,38 @@ export default function Dashboard() {
             </h3>
           </div>
           <div className="p-0 overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Month</th>
-                  <th className="px-6 py-4 font-medium text-right">Income</th>
-                  <th className="px-6 py-4 font-medium text-right">Expenses</th>
-                  <th className="px-6 py-4 font-medium text-right">Net Profit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {chartData.length > 0 ? (
-                  [...chartData].reverse().map((data) => (
-                    <tr key={data.month} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-slate-700">{data.month}</td>
-                      <td className="px-6 py-4 text-right text-emerald-600 font-medium">{formatCurrency(data.income)}</td>
-                      <td className="px-6 py-4 text-right text-rose-600 font-medium">{formatCurrency(data.expense)}</td>
-                      <td className={`px-6 py-4 text-right font-bold ${data.income - data.expense >= 0 ? "text-indigo-600" : "text-orange-600"}`}>
-                        {formatCurrency(data.income - data.expense)}
+            <div className="min-w-[600px]">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Month</th>
+                    <th className="px-6 py-4 font-medium text-right">Income</th>
+                    <th className="px-6 py-4 font-medium text-right">Expenses</th>
+                    <th className="px-6 py-4 font-medium text-right">Net Profit</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {chartData.length > 0 ? (
+                    [...chartData].reverse().map((data) => (
+                      <tr key={data.month} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-slate-700">{data.month}</td>
+                        <td className="px-6 py-4 text-right text-emerald-600 font-medium">{formatCurrency(data.income)}</td>
+                        <td className="px-6 py-4 text-right text-rose-600 font-medium">{formatCurrency(data.expense)}</td>
+                        <td className={`px-6 py-4 text-right font-bold ${data.income - data.expense >= 0 ? "text-indigo-600" : "text-orange-600"}`}>
+                          {formatCurrency(data.income - data.expense)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
+                        No monthly summaries available.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                      No monthly summaries available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -457,46 +459,48 @@ export default function Dashboard() {
             </h3>
           </div>
           <div className="p-0 overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium">Type</th>
-                  <th className="px-6 py-4 font-medium">Category</th>
-                  <th className="px-6 py-4 font-medium text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {transactions.length > 0 ? (
-                  transactions.map((transaction) => (
-                    <tr key={transaction.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 text-slate-600">
-                        {transaction.date ? transaction.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                          transaction.type === "Income" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+            <div className="min-w-[500px]">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium">Type</th>
+                    <th className="px-6 py-4 font-medium">Category</th>
+                    <th className="px-6 py-4 font-medium text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {transactions.length > 0 ? (
+                    transactions.map((transaction) => (
+                      <tr key={transaction.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4 text-slate-600">
+                          {transaction.date ? transaction.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                            transaction.type === "Income" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                          }`}>
+                            {transaction.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700 font-medium">{transaction.category}</td>
+                        <td className={`px-6 py-4 text-right font-bold ${
+                          transaction.type === "Income" ? "text-emerald-600" : "text-rose-600"
                         }`}>
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 font-medium">{transaction.category}</td>
-                      <td className={`px-6 py-4 text-right font-bold ${
-                        transaction.type === "Income" ? "text-emerald-600" : "text-rose-600"
-                      }`}>
-                        {transaction.type === "Income" ? "+" : "-"}{transaction.amount.toLocaleString()}
+                          {transaction.type === "Income" ? "+" : "-"}{transaction.amount.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
+                        No recent activities available.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                      No recent activities available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>
@@ -512,39 +516,41 @@ export default function Dashboard() {
               </h3>
             </div>
             <div className="p-0 overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Name</th>
-                    <th className="px-6 py-4 font-medium">Type</th>
-                    <th className="px-6 py-4 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {properties.length > 0 ? (
-                    properties.map((property) => (
-                      <tr key={property.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-slate-800">{property.name}</td>
-                        <td className="px-6 py-4 text-slate-500">{property.type}</td>
-                        <td className="px-6 py-4 text-right">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
-                            property.isActive ? "text-emerald-600 bg-emerald-50" : "text-slate-500 bg-slate-50"
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${property.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
-                            {property.isActive ? "Active" : "Inactive"}
-                          </span>
+              <div className="min-w-[400px]">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Name</th>
+                      <th className="px-6 py-4 font-medium">Type</th>
+                      <th className="px-6 py-4 font-medium text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {properties.length > 0 ? (
+                      properties.map((property) => (
+                        <tr key={property.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-6 py-4 font-semibold text-slate-800">{property.name}</td>
+                          <td className="px-6 py-4 text-slate-500">{property.type}</td>
+                          <td className="px-6 py-4 text-right">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
+                              property.isActive ? "text-emerald-600 bg-emerald-50" : "text-slate-500 bg-slate-50"
+                            }`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${property.isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
+                              {property.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30">
+                          No properties found.
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30">
-                        No properties found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -557,37 +563,39 @@ export default function Dashboard() {
               </h3>
             </div>
             <div className="p-0 overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Member Name</th>
-                    <th className="px-6 py-4 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {familyMembers.length > 0 ? (
-                    familyMembers.map((member: FamilyMember) => (
-                      <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-slate-800">{member.name}</td>
-                        <td className="px-6 py-4 text-right">
-                           <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
-                            member.isActive ? "text-indigo-600 bg-indigo-50" : "text-slate-500 bg-slate-50"
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-indigo-500" : "bg-slate-300"}`} />
-                            {member.isActive ? "Active" : "Regular"}
-                          </span>
+              <div className="min-w-[400px]">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Member Name</th>
+                      <th className="px-6 py-4 font-medium text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {familyMembers.length > 0 ? (
+                      familyMembers.map((member: FamilyMember) => (
+                        <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-6 py-4 font-semibold text-slate-800">{member.name}</td>
+                          <td className="px-6 py-4 text-right">
+                             <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold ${
+                              member.isActive ? "text-indigo-600 bg-indigo-50" : "text-slate-500 bg-slate-50"
+                            }`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${member.isActive ? "bg-indigo-500" : "bg-slate-300"}`} />
+                              {member.isActive ? "Active" : "Regular"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={2} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30 font-medium italic">
+                          No family members documented.
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="px-6 py-8 text-center text-slate-500 bg-slate-50/30 font-medium italic">
-                        No family members documented.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
       </div>

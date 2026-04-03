@@ -373,7 +373,8 @@ export default function IncomePage() {
           <p>No income entries found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+            <div className="min-w-[800px]">
+              <table className="min-w-full text-left text-sm">
               <thead className="border-b border-slate-200 text-slate-700">
                 <tr>
                   <th className="px-3 py-2">Date</th>
@@ -413,6 +414,7 @@ export default function IncomePage() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
       </section>
     </div>

@@ -267,37 +267,39 @@ export default function OwnershipSharesPage() {
                   )}
 
                   <div className="overflow-x-auto">
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="border-b border-slate-200 text-slate-700">
-                        <tr>
-                          <th className="px-3 py-2">Family Member</th>
-                          <th className="px-3 py-2">Percentage</th>
-                          <th className="px-3 py-2">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {propertyShares.map((share) => (
-                          <tr key={share.id} className="border-b last:border-b-0">
-                            <td className="px-3 py-2">{getMemberName(share.memberId)}</td>
-                            <td className="px-3 py-2">{share.percentage.toFixed(2)}%</td>
-                            <td className="px-3 py-2 space-x-2">
-                              <button
-                                onClick={() => handleEdit(share)}
-                                className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(share.id)}
-                                className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                              >
-                                Delete
-                              </button>
-                            </td>
+                    <div className="min-w-[500px]">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="border-b border-slate-200 text-slate-700">
+                          <tr>
+                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap">Family Member</th>
+                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap text-right">Percentage</th>
+                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap text-right pr-6">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {propertyShares.map((share) => (
+                            <tr key={share.id} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
+                              <td className="px-3 py-3 font-semibold text-slate-700">{getMemberName(share.memberId)}</td>
+                              <td className="px-3 py-3 font-bold text-indigo-600 text-right">{share.percentage.toFixed(2)}%</td>
+                              <td className="px-3 py-3 text-right pr-6 space-x-2">
+                                <button
+                                  onClick={() => handleEdit(share)}
+                                  className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(share.id)}
+                                  className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-100 transition-colors text-xs font-bold"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               );

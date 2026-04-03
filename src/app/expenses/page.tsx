@@ -373,45 +373,47 @@ export default function ExpensesPage() {
           <p>No expense entries found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-700">
-                <tr>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Month</th>
-                  <th className="px-3 py-2">Property</th>
-                  <th className="px-3 py-2">Category</th>
-                  <th className="px-3 py-2">Description</th>
-                  <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-2">{entry.date.toLocaleDateString()}</td>
-                    <td className="px-3 py-2">{entry.monthKey}</td>
-                    <td className="px-3 py-2">{getPropertyName(entry.propertyId)}</td>
-                    <td className="px-3 py-2">{entry.category}</td>
-                    <td className="px-3 py-2">{entry.description || "-"}</td>
-                    <td className="px-3 py-2">{entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}</td>
-                    <td className="px-3 py-2 space-x-2">
-                      <button
-                        onClick={() => handleEdit(entry)}
-                        className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            <div className="min-w-[800px]">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-slate-200 text-slate-700">
+                  <tr>
+                    <th className="px-3 py-2">Date</th>
+                    <th className="px-3 py-2">Month</th>
+                    <th className="px-3 py-2">Property</th>
+                    <th className="px-3 py-2">Category</th>
+                    <th className="px-3 py-2">Description</th>
+                    <th className="px-3 py-2">Amount</th>
+                    <th className="px-3 py-2">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredEntries.map((entry) => (
+                    <tr key={entry.id} className="border-b last:border-b-0">
+                      <td className="px-3 py-2">{entry.date.toLocaleDateString()}</td>
+                      <td className="px-3 py-2">{entry.monthKey}</td>
+                      <td className="px-3 py-2">{getPropertyName(entry.propertyId)}</td>
+                      <td className="px-3 py-2">{entry.category}</td>
+                      <td className="px-3 py-2">{entry.description || "-"}</td>
+                      <td className="px-3 py-2">{entry.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}</td>
+                      <td className="px-3 py-2 space-x-2">
+                        <button
+                          onClick={() => handleEdit(entry)}
+                          className="rounded-md border border-blue-500 px-2 py-1 text-blue-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(entry.id)}
+                          className="rounded-md border border-rose-500 px-2 py-1 text-rose-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
