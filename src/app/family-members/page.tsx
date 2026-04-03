@@ -8,6 +8,8 @@ import {
   deleteFamilyMember,
 } from "@/lib/db/familyMembers";
 import type { FamilyMember } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
 
 const initialForm: Omit<FamilyMember, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -21,6 +23,7 @@ export default function FamilyMembersPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -41,6 +44,7 @@ export default function FamilyMembersPage() {
   const resetForm = () => {
     setForm(initialForm);
     setEditId(null);
+    setIsModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +83,7 @@ export default function FamilyMembersPage() {
   const handleEdit = (member: FamilyMember) => {
     setEditId(member.id);
     setForm({ name: member.name, isActive: member.isActive });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -101,56 +106,69 @@ export default function FamilyMembersPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <h2 className="text-3xl font-bold">Family Members</h2>
-        <p className="text-sm text-slate-600">Manage family members.</p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Family Members</h2>
+          <p className="text-sm text-slate-500 mt-1">Manage family members.</p>
+        </div>
+        <button 
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+        >
+          <Plus size={20} />
+          <span>Add Member</span>
+        </button>
       </header>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-        <h3 className="text-xl font-semibold mb-4">{editId ? "Edit Member" : "Add Member"}</h3>
-
-        <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+      {/* Member Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editId ? "Edit Family Member" : "Add Family Member"}
+      >
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
             <input
-              className="w-full rounded-lg border px-3 py-2"
+              className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
+              placeholder="e.g. John Doe"
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Active</label>
+          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
             <input
               type="checkbox"
+              id="isMemberActive"
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
               checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
             />
+            <label htmlFor="isMemberActive" className="text-sm font-medium text-slate-700 cursor-pointer">Member is currently Active</label>
           </div>
 
-          <div className="md:col-span-2 flex gap-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={actionLoading}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
             >
               {actionLoading ? "Saving..." : editId ? "Update Member" : "Create Member"}
             </button>
-            {editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900"
-              >
-                Cancel
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+            >
+              Cancel
+            </button>
           </div>
 
-          {error && <p className="md:col-span-2 text-sm text-rose-600">{error}</p>}
+          {error && <p className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>}
         </form>
-      </section>
+      </Modal>
 
       <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
         <h3 className="text-xl font-semibold mb-4">Family Members</h3>

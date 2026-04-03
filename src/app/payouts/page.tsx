@@ -9,6 +9,8 @@ import {
 } from "@/lib/db/memberPayouts";
 import { getAllFamilyMembers } from "@/lib/db/familyMembers";
 import type { MemberPayout, FamilyMember } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
 
 const initialDate = new Date();
 const initialForm: Omit<MemberPayout, "id" | "createdAt" | "updatedAt"> = {
@@ -27,6 +29,7 @@ export default function MemberPayoutsPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     memberId: "",
     monthKey: "",
@@ -69,6 +72,7 @@ export default function MemberPayoutsPage() {
       monthKey: `${freshDate.getFullYear()}-${String(freshDate.getMonth() + 1).padStart(2, "0")}`
     });
     setEditId(null);
+    setIsModalOpen(false);
   };
 
   const generateMonthKey = (date: Date) => {
@@ -143,6 +147,7 @@ export default function MemberPayoutsPage() {
       amount: payout.amount,
       description: payout.description ?? "",
     });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -187,11 +192,18 @@ export default function MemberPayoutsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b pb-4 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Member Payouts</h2>
           <p className="text-sm text-slate-500 mt-1">Record and track funds withdrawn by family members.</p>
         </div>
+        <button 
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+        >
+          <Plus size={20} />
+          <span>Record Payout</span>
+        </button>
       </header>
 
       {/* Summary Cards */}
@@ -250,62 +262,64 @@ export default function MemberPayoutsPage() {
         </div>
       </section>
 
-      {/* Form */}
-      <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="text-xl font-semibold">{editId ? "Edit Payout Record" : "Record New Payout"}</h3>
-        </div>
+      {/* Entry Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editId ? "Edit Payout Record" : "Record New Payout"}
+      >
+        <form onSubmit={handleSubmit} className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Family Member</label>
+              <select
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.memberId}
+                onChange={(e) => {
+                  const memberId = e.target.value;
+                  setForm({ ...form, memberId });
+                  localStorage.setItem("lastPayoutMember", memberId);
+                }}
+                required
+              >
+                <option value="">Select Member</option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <form onSubmit={handleSubmit} className="p-6 grid gap-6 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Family Member</label>
-            <select
-              className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              value={form.memberId}
-              onChange={(e) => {
-                const memberId = e.target.value;
-                setForm({ ...form, memberId });
-                localStorage.setItem("lastPayoutMember", memberId);
-              }}
-              required
-            >
-              <option value="">Select Member</option>
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Transfer</label>
+              <input
+                type="date"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.date.toISOString().split("T")[0]}
+                onChange={(e) => handleDateChange(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Disbursed (BDT)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-medium text-rose-600"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Transfer</label>
-            <input
-              type="date"
-              className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              value={form.date.toISOString().split("T")[0]}
-              onChange={(e) => handleDateChange(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Disbursed (BDT)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors font-medium text-rose-600"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Description / Memo (Optional)</label>
             <textarea
-              className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={2}
@@ -313,28 +327,26 @@ export default function MemberPayoutsPage() {
             />
           </div>
 
-          <div className="md:col-span-2 flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={actionLoading}
-              className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white hover:bg-indigo-700 font-medium disabled:opacity-50 transition-colors shadow-sm"
+              className="flex-1 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
             >
               {actionLoading ? "Saving..." : editId ? "Update Payout" : "Record Payout"}
             </button>
-            {editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg bg-slate-100 border border-slate-300 px-6 py-2.5 text-slate-700 hover:bg-slate-200 font-medium transition-colors"
-              >
-                Cancel
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+            >
+              Cancel
+            </button>
           </div>
 
-          {error && <p className="md:col-span-2 text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>}
+          {error && <p className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>}
         </form>
-      </section>
+      </Modal>
 
       {/* Table */}
       <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">

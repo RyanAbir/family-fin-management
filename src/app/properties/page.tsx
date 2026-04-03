@@ -9,6 +9,8 @@ import {
   deleteProperty,
 } from "@/lib/db/properties";
 import type { Property } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
 
 const initialForm: Omit<Property, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -25,6 +27,7 @@ export default function PropertiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -46,6 +49,7 @@ export default function PropertiesPage() {
   const resetForm = () => {
     setForm(initialForm);
     setEditId(null);
+    setIsModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,6 +101,7 @@ export default function PropertiesPage() {
       location: property.location,
       isActive: property.isActive,
     });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -119,83 +124,97 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <h2 className="text-3xl font-bold">Properties</h2>
-        <p className="text-sm text-slate-600">Manage property records.</p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Properties</h2>
+          <p className="text-sm text-slate-500 mt-1">Manage property records.</p>
+        </div>
+        <button 
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+        >
+          <Plus size={20} />
+          <span>Add Property</span>
+        </button>
       </header>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-        <h3 className="text-xl font-semibold mb-4">{editId ? "Edit Property" : "Add Property"}</h3>
+      {/* Property Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editId ? "Edit Property" : "Add Property"}
+      >
+        <form onSubmit={handleSubmit} className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
+              <input
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-            <input
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Type</label>
+              <select
+                className="w-full rounded-lg border px-3 py-2.5 bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                required
+              >
+                <option value="Rent">Rent</option>
+                <option value="Shop">Shop</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Location</label>
+              <input
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-            <select
-              className="w-full rounded-lg border px-3 py-2 bg-white"
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              required
-            >
-              <option value="Rent">Rent</option>
-              <option value="Shop">Shop</option>
-              <option value="Residential">Residential</option>
-              <option value="Commercial">Commercial</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
-            <input
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Active</label>
+          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
             <input
               type="checkbox"
+              id="isActive"
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
               checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
             />
+            <label htmlFor="isActive" className="text-sm font-medium text-slate-700 cursor-pointer">Property is currently Active</label>
           </div>
 
-          <div className="md:col-span-2 flex gap-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={actionLoading}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
             >
               {actionLoading ? "Saving..." : editId ? "Update Property" : "Create Property"}
             </button>
-            {editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900"
-              >
-                Cancel
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+            >
+              Cancel
+            </button>
           </div>
 
           {error && (
-            <p className="md:col-span-2 text-sm text-rose-600">{error}</p>
+            <p className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>
           )}
         </form>
-      </section>
+      </Modal>
 
       <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
         <h3 className="text-xl font-semibold mb-4">Properties</h3>

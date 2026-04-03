@@ -9,6 +9,8 @@ import {
 } from "@/lib/db/expenseEntries";
 import { getAllProperties } from "@/lib/db/properties";
 import type { ExpenseEntry, Property } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
 
 const initialDate = new Date();
 const initialForm: Omit<ExpenseEntry, "id" | "createdAt" | "updatedAt"> = {
@@ -30,6 +32,7 @@ export default function ExpensesPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     propertyId: "",
     monthKey: "",
@@ -70,6 +73,7 @@ export default function ExpensesPage() {
       monthKey: `${freshDate.getFullYear()}-${String(freshDate.getMonth() + 1).padStart(2, "0")}`
     });
     setEditId(null);
+    setIsModalOpen(false);
   };
 
   const generateMonthKey = (date: Date) => {
@@ -154,6 +158,7 @@ export default function ExpensesPage() {
       description: entry.description ?? "",
       amount: entry.amount,
     });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -198,9 +203,18 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <h2 className="text-3xl font-bold">Expenses</h2>
-        <p className="text-sm text-slate-600">Track operational costs and expenses.</p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Expenses</h2>
+          <p className="text-sm text-slate-500 mt-1">Track operational costs and expenses.</p>
+        </div>
+        <button 
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-white hover:bg-rose-700 font-bold transition-all shadow-lg shadow-rose-200"
+        >
+          <Plus size={20} />
+          <span>Add Entry</span>
+        </button>
       </header>
 
       {/* Summary Cards */}
@@ -259,109 +273,111 @@ export default function ExpensesPage() {
         </div>
       </section>
 
-      {/* Form */}
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
-        <h3 className="text-xl font-semibold mb-4">{editId ? "Edit Expense Entry" : "Add Expense Entry"}</h3>
+      {/* Entry Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editId ? "Edit Expense Entry" : "Add Expense Entry"}
+      >
+        <form onSubmit={handleSubmit} className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Property</label>
+              <select
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.propertyId}
+                onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
+                required
+              >
+                <option value="">Select Property</option>
+                {properties.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {property.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Property</label>
-            <select
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.propertyId}
-              onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
-              required
-            >
-              <option value="">Select Property</option>
-              {properties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
+              <input
+                type="date"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.date.toISOString().split("T")[0]}
+                onChange={(e) => handleDateChange(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+              <select
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                value={form.category}
+                onChange={(e) => {
+                  const category = e.target.value;
+                  setForm({ ...form, category });
+                  localStorage.setItem("lastExpenseCategory", category);
+                }}
+                required
+              >
+                <option value="">Select Category</option>
+                {expenseCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (BDT)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-medium text-rose-600"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                required
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-            <input
-              type="date"
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.date.toISOString().split("T")[0]}
-              onChange={(e) => handleDateChange(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-            <select
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.category}
-              onChange={(e) => {
-                const category = e.target.value;
-                setForm({ ...form, category });
-                localStorage.setItem("lastExpenseCategory", category);
-              }}
-              required
-            >
-              <option value="">Select Category</option>
-              {expenseCategories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              className="w-full rounded-lg border px-3 py-2"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-              required
-            />
-          </div>
-
-          <div className={`md:col-span-2 transition-all duration-300 ${form.category === "Other Expense" ? "p-4 bg-rose-50 rounded-xl border border-rose-200" : ""}`}>
-            <label className={`block text-sm font-medium mb-1 ${form.category === "Other Expense" ? "text-rose-700" : "text-slate-700"}`}>
+          <div className={`transition-all duration-300 ${form.category === "Other Expense" ? "p-4 bg-rose-50 rounded-xl border border-rose-200" : ""}`}>
+            <label className={`block text-sm font-medium mb-1.5 ${form.category === "Other Expense" ? "text-rose-700" : "text-slate-700"}`}>
               {form.category === "Other Expense" ? "Please define what this 'Other' expense is *" : "Description (Optional)"}
             </label>
             <textarea
-              className={`w-full rounded-lg border px-3 py-2 ${form.category === "Other Expense" ? "border-rose-300 focus:ring-rose-500 focus:border-rose-500 bg-white" : ""}`}
+              className={`w-full rounded-lg border px-3 py-2.5 transition-all ${form.category === "Other Expense" ? "border-rose-300 focus:ring-rose-500 focus:border-rose-500 bg-white" : "focus:ring-indigo-500 focus:border-indigo-500"}`}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={form.category === "Other Expense" ? 2 : 3}
               required={form.category === "Other Expense"}
-              placeholder={form.category === "Other Expense" ? "e.g. Broken window repair, Event catering..." : ""}
+              placeholder={form.category === "Other Expense" ? "e.g. Broken window repair, Event catering..." : "Any detail about this expense..."}
             />
           </div>
 
-          <div className="md:col-span-2 flex gap-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
               disabled={actionLoading}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
             >
               {actionLoading ? "Saving..." : editId ? "Update Entry" : "Create Entry"}
             </button>
-            {editId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900"
-              >
-                Cancel
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+            >
+              Cancel
+            </button>
           </div>
 
-          {error && <p className="md:col-span-2 text-sm text-rose-600">{error}</p>}
+          {error && <p className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{error}</p>}
         </form>
-      </section>
+      </Modal>
 
       {/* Table */}
       <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
