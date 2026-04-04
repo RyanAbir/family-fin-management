@@ -17,6 +17,16 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const handleNotificationClick = async (notif: AppNotification) => {
+    if (user) {
+      await markNotificationAsRead(notif.id, user.uid);
+    }
+    setIsOpen(false);
+    if (notif.targetTab) {
+      router.push(notif.targetTab);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -44,6 +54,7 @@ export function NotificationBell() {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, unreadCount]);
 
   useEffect(() => {
@@ -55,17 +66,6 @@ export function NotificationBell() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleNotificationClick = async (notif: AppNotification) => {
-    if (user) {
-      await markNotificationAsRead(notif.id, user.uid);
-    }
-    setIsOpen(false);
-    if (notif.targetTab) {
-      router.push(notif.targetTab);
-    }
-  };
-
   const markAllAsRead = async () => {
     if (!user) return;
     const unreadNotifs = notifications.filter(n => !n.readBy.includes(user.uid));

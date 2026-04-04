@@ -33,28 +33,13 @@ const navItems = [
   { name: "Distribution", href: "/distribution", icon: History },
 ];
 
-export function Navigation() {
-  const [isOpen, setIsOpen] = useState(false);
+function NavContent() {
   const pathname = usePathname();
-  const { user, profile, logout, loading } = useAuth();
+  const { user, profile, logout } = useAuth();
+  
+  if (!user) return null;
 
-  // Close sidebar when navigating on mobile
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
-
-  // Prevent scrolling when sidebar is open on mobile
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-  }, [isOpen]);
-
-  if (loading || !user || pathname === "/login") return null;
-
-  const NavContent = () => (
+  return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-8">
         <Link 
@@ -96,7 +81,6 @@ export function Navigation() {
       </nav>
 
       <div className="p-6 border-t border-slate-50 space-y-5 bg-gradient-to-b from-white to-slate-50/50">
-        {/* User Quick Profile - Premium Footer */}
         <Link 
           href="/settings/profile"
           className="flex items-center gap-4 p-4 rounded-[2rem] bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-100/50 transition-all group/profile cursor-pointer"
@@ -122,7 +106,6 @@ export function Navigation() {
           <ChevronRight size={14} className="text-slate-300 group-hover/profile:text-indigo-400 group-hover/profile:translate-x-1 transition-all" />
         </Link>
 
-        {/* Global Settings Links */}
         <div className="space-y-1 px-2">
           <Link 
             href="/settings/members"
@@ -152,6 +135,28 @@ export function Navigation() {
       </div>
     </div>
   );
+}
+
+export function Navigation() {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const { user, loading } = useAuth();
+
+  // Close sidebar when navigating on mobile
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Prevent scrolling when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isOpen]);
+
+  if (loading || !user || pathname === "/login") return null;
 
   return (
     <>

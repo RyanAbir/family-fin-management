@@ -102,7 +102,7 @@ describe('distributions', () => {
       const result = calculatePropertyDistributions(mockSummaries, invalidShares, mockMembers);
 
       expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0].code).toBe('INVALID_SHARE_TOTAL');
+      expect(result.warnings[0].issue).toBe('INVALID_SHARE_TOTAL');
       expect(result.warnings[0].message).toContain('120%');
     });
 
@@ -120,7 +120,7 @@ describe('distributions', () => {
       ];
       const result = calculatePropertyDistributions(mockSummaries, sharesWithMissing, mockMembers);
 
-      expect(result.warnings.some(w => w.code === 'MISSING_MEMBER')).toBe(true);
+      expect(result.warnings.some(w => w.issue === 'MISSING_MEMBER')).toBe(true);
     });
 
     it('should return empty distributions for properties with no shares', () => {

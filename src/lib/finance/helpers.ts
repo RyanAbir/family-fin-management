@@ -135,5 +135,5 @@ export const groupBy = <T, K extends string | number | symbol>(
 /**
  * Sum numeric arrays safely
  */
-export const sumBy = <T>(items: T[], selector: (item: T) => number): number =>
+export const sumBy = <T>(items: T[], selector: (item: T) => unknown): number =>
   round2(items.reduce((sum, item) => sum + toSafeNumber(selector(item)), 0));
