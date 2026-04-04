@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -40,15 +42,15 @@ function NavContent() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950">
       <div className="p-8">
         <Link 
           href="/" 
           className="flex items-center gap-4 mb-2 group/logo hover:opacity-80 transition-opacity"
         >
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-2xl shadow-indigo-200 ring-4 ring-indigo-50 text-xl font-heading group-hover/logo:scale-105 transition-transform">F</div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-2xl shadow-indigo-200 dark:shadow-indigo-900/40 ring-4 ring-indigo-50 dark:ring-slate-900 text-xl font-heading group-hover/logo:scale-105 transition-transform">F</div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900 font-heading leading-tight italic">Family Finance</h1>
+            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100 font-heading leading-tight italic">Family Finance</h1>
             <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] opacity-80">Portfolio v1.1</p>
           </div>
         </Link>
@@ -63,12 +65,12 @@ function NavContent() {
               href={item.href}
               className={`flex items-center justify-between group px-5 py-3.5 rounded-2xl text-sm font-bold transition-all relative overflow-hidden ${
                 isActive 
-                  ? "bg-slate-900 text-white shadow-2xl shadow-slate-200" 
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-slate-900 dark:bg-indigo-500/10 text-white dark:text-indigo-400 shadow-2xl shadow-slate-200 dark:shadow-none" 
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               <div className="flex items-center gap-3.5 z-10">
-                <item.icon size={18} className={isActive ? "text-indigo-400" : "text-slate-400 group-hover:text-indigo-600 transition-colors"} />
+                <item.icon size={18} className={isActive ? "text-indigo-400" : "text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"} />
                 <span className="tracking-tight">{item.name}</span>
               </div>
               {isActive && (
@@ -80,30 +82,30 @@ function NavContent() {
         })}
       </nav>
 
-      <div className="p-6 border-t border-slate-50 space-y-5 bg-gradient-to-b from-white to-slate-50/50">
+      <div className="p-6 border-t border-slate-50 dark:border-slate-900/50 space-y-5 bg-gradient-to-b from-white dark:from-slate-950 to-slate-50/50 dark:to-slate-900/20">
         <Link 
           href="/settings/profile"
-          className="flex items-center gap-4 p-4 rounded-[2rem] bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-100/50 transition-all group/profile cursor-pointer"
+          className="flex items-center gap-4 p-4 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/20 transition-all group/profile cursor-pointer"
         >
            <div className="relative">
               <img 
                 src={profile?.photoURL || user?.photoURL || ""} 
                 alt={profile?.displayName || user?.displayName || ""} 
-                className="w-12 h-12 rounded-full border-2 border-white shadow-xl object-cover ring-2 ring-slate-50 transition-all group-hover/profile:ring-indigo-100"
+                className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 shadow-xl object-cover ring-2 ring-slate-50 dark:ring-slate-900 transition-all group-hover/profile:ring-indigo-100 dark:group-hover/profile:ring-indigo-900/50"
               />
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white flex items-center justify-center text-white scale-0 group-hover/profile:scale-110 transition-transform shadow-lg">
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white scale-0 group-hover/profile:scale-110 transition-transform shadow-lg">
                 <Settings size={12} strokeWidth={3} />
               </div>
            </div>
           <div className="flex-1 min-w-0">
-             <p className="text-sm font-black text-slate-900 truncate group-hover/profile:text-indigo-600 transition-colors font-heading">
+             <p className="text-sm font-black text-slate-900 dark:text-slate-100 truncate group-hover/profile:text-indigo-600 dark:group-hover/profile:text-indigo-400 transition-colors font-heading">
                 {profile?.displayName || user?.displayName}
              </p>
              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mt-0.5">
                 {profile?.role || "Viewer"}
              </p>
           </div>
-          <ChevronRight size={14} className="text-slate-300 group-hover/profile:text-indigo-400 group-hover/profile:translate-x-1 transition-all" />
+          <ChevronRight size={14} className="text-slate-300 dark:text-slate-500 group-hover/profile:text-indigo-400 group-hover/profile:translate-x-1 transition-all" />
         </Link>
 
         <div className="space-y-1 px-2">
@@ -111,26 +113,26 @@ function NavContent() {
             href="/settings/members"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
               pathname === "/settings/members" 
-                ? "bg-indigo-50 text-indigo-700 shadow-sm" 
-                : "text-slate-400 hover:bg-white hover:text-slate-900"
+                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 shadow-sm" 
+                : "text-slate-400 dark:text-slate-500 hover:bg-white dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
-            <Users size={16} className={pathname === "/settings/members" ? "text-indigo-600" : "text-slate-300"} />
+            <Users size={16} className={pathname === "/settings/members" ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-500"} />
             <span>Family Settings</span>
           </Link>
           
           <button 
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all group/logout"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all group/logout"
             title="Logout"
           >
-            <LogOut size={16} className="text-slate-300 group-hover/logout:text-rose-500 transition-colors" />
+            <LogOut size={16} className="text-slate-300 dark:text-slate-500 group-hover/logout:text-rose-500 dark:group-hover/logout:text-rose-400 transition-colors" />
             <span>Sign Out</span>
           </button>
         </div>
 
         <div className="px-6 pb-2">
-          <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] text-center italic">Portfolio Security v1.1.0</p>
+          <p className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.3em] text-center italic">Portfolio Security v1.1.0</p>
         </div>
       </div>
     </div>
@@ -161,16 +163,18 @@ export function Navigation() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <header className="lg:hidden sticky top-0 z-[100] w-full bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 h-16 flex items-center justify-between">
+      <header className="lg:hidden sticky top-0 z-[100] w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-4 h-16 flex items-center justify-between transition-colors">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold transition-transform active:scale-95">F</div>
-          <span className="font-bold text-slate-900 tracking-tight">Family Finance</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 tracking-tight">Family Finance</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 lg:gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
           <NotificationBell />
           <button 
             onClick={() => setIsOpen(true)}
-            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Open menu"
           >
             <Menu size={24} />
@@ -181,18 +185,18 @@ export function Navigation() {
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity"
+          className="fixed inset-0 z-[110] bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm lg:hidden transition-opacity"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar Drawer */}
-      <div className={`fixed inset-y-0 left-0 z-[1200] w-72 bg-white transform transition-transform duration-300 ease-in-out lg:hidden shadow-2xl ${
+      <div className={`fixed inset-y-0 left-0 z-[1200] w-72 bg-white dark:bg-slate-950 transform transition-transform duration-300 ease-in-out lg:hidden shadow-2xl ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         <button 
           onClick={() => setIsOpen(false)}
-          className="absolute right-4 top-4 p-2 rounded-lg text-slate-400 hover:bg-slate-100 lg:hidden"
+          className="absolute right-4 top-4 p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden z-10"
         >
           <X size={20} />
         </button>
@@ -200,12 +204,18 @@ export function Navigation() {
       </div>
 
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:border-r lg:border-slate-200 shadow-sm z-[1000]">
-        <div className="absolute top-4 right-4 z-[100]">
-           <NotificationBell />
-        </div>
+      <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:border-r lg:border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm z-[1000] transition-colors">
         <NavContent />
       </aside>
+
+      {/* Desktop Top Right Controls */}
+      <div className="hidden lg:flex fixed top-6 right-8 z-[100] items-center gap-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg px-2.5 py-1.5 rounded-2xl shadow-lg shadow-slate-200/20 border border-slate-200/50 dark:border-slate-800/50">
+         <LanguageToggle />
+         <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+         <ThemeToggle />
+         <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+         <NotificationBell />
+      </div>
     </>
   );
 }
