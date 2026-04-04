@@ -30,7 +30,19 @@ export const translations = {
     share: "Share",
     noActivity: "No activity yet.",
     successful: "Successful",
-    other: "Other"
+    other: "Other",
+    navDashboard: "Dashboard",
+    navProperties: "Properties",
+    navFamily: "Family Members",
+    navShares: "Ownership Shares",
+    navIncome: "Income",
+    navExpenses: "Expenses",
+    navPayouts: "Member Payouts",
+    navDistribution: "Distribution",
+    navSettings: "Family Settings",
+    navSignOut: "Sign Out",
+    navSecurity: "Portfolio Security v1.1.0",
+    navPortfolio: "Portfolio v1.1"
   },
   BN: {
     hello: "হ্যালো,",
@@ -63,7 +75,19 @@ export const translations = {
     share: "ভাগ",
     noActivity: "এখনও কোনও কার্যকলাপ নেই।",
     successful: "সফল",
-    other: "অন্যান্য"
+    other: "অন্যান্য",
+    navDashboard: "ড্যাশবোর্ড",
+    navProperties: "সম্পত্তি",
+    navFamily: "পরিবারের সদস্য",
+    navShares: "মালিকানার শেয়ার",
+    navIncome: "আয়",
+    navExpenses: "খরচ",
+    navPayouts: "সদস্যদের পেআউট",
+    navDistribution: "বণ্টন",
+    navSettings: "পারিবারিক সেটিংস",
+    navSignOut: "সাইন আউট",
+    navSecurity: "পোর্টফোলিও সিকিউরিটি v1.1.0",
+    navPortfolio: "পোর্টফোলিও v1.1"
   }
 } as const;
 

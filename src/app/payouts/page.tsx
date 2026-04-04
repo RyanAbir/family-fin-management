@@ -213,10 +213,10 @@ export default function MemberPayoutsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Member Payouts</h2>
-          <p className="text-sm text-slate-500 mt-1">Record and track funds withdrawn by family members.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Member Payouts</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Record and track funds withdrawn by family members.</p>
         </div>
         {isMember ? (
           <button 
@@ -236,11 +236,11 @@ export default function MemberPayoutsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border p-5 shadow-sm bg-white">
+        <div className="rounded-xl border p-5 shadow-sm bg-white dark:bg-slate-900">
           <p className="text-sm font-medium text-slate-600">Total Payout Records</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summaryStats.totalEntries}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{summaryStats.totalEntries}</p>
         </div>
-        <div className="rounded-xl border p-5 shadow-sm bg-white">
+        <div className="rounded-xl border p-5 shadow-sm bg-white dark:bg-slate-900">
           <p className="text-sm font-medium text-slate-600">Total Disbursed</p>
           <p className="mt-2 text-2xl font-semibold text-rose-600">
             {summaryStats.totalAmount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
@@ -249,10 +249,10 @@ export default function MemberPayoutsPage() {
       </div>
 
       {/* Filters */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+      <section className="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Filter by Member</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Filter by Member</label>
             <select
               className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               value={filters.memberId}
@@ -267,7 +267,7 @@ export default function MemberPayoutsPage() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Filter by Month</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Filter by Month</label>
             <select
               className="w-full rounded-lg border px-3 py-2.5 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               value={filters.monthKey}
@@ -283,7 +283,7 @@ export default function MemberPayoutsPage() {
           </div>
           <button
             onClick={clearFilters}
-            className="rounded-lg bg-slate-100 border border-slate-300 px-6 py-2.5 text-slate-700 hover:bg-slate-200 font-medium transition-colors"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 px-6 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-medium transition-colors"
           >
             Clear Filters
           </button>
@@ -299,7 +299,7 @@ export default function MemberPayoutsPage() {
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Family Member</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Family Member</label>
               <select
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.memberId}
@@ -320,7 +320,7 @@ export default function MemberPayoutsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Transfer</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Date of Transfer</label>
               <input
                 type="date"
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -331,7 +331,7 @@ export default function MemberPayoutsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Disbursed (BDT)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Amount Disbursed (BDT)</label>
               <input
                 type="number"
                 step="0.01"
@@ -345,7 +345,7 @@ export default function MemberPayoutsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Description / Memo (Optional)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Description / Memo (Optional)</label>
             <textarea
               className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               value={form.description}
@@ -366,7 +366,7 @@ export default function MemberPayoutsPage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
             >
               Cancel
             </button>
@@ -377,20 +377,20 @@ export default function MemberPayoutsPage() {
       </Modal>
 
       {/* Table */}
-      <section className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+      <section className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50">
           <h3 className="text-xl font-semibold">Payout History</h3>
         </div>
 
         {loading ? (
-          <p className="p-6 text-slate-500">Loading payout records...</p>
+          <p className="p-6 text-slate-500 dark:text-slate-400">Loading payout records...</p>
         ) : filteredPayouts.length === 0 ? (
-          <p className="p-6 text-slate-500 text-center italic py-12">No payout records found.</p>
+          <p className="p-6 text-slate-500 dark:text-slate-400 text-center italic py-12">No payout records found.</p>
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="border-b border-slate-200 text-slate-700">
+                  <thead className="border-b border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
                     <tr>
                       <th className="px-6 py-4 text-left">Date</th>
                       <th className="px-6 py-4 text-left">Family Member</th>
@@ -398,11 +398,11 @@ export default function MemberPayoutsPage() {
                       {isMember && <th className="px-6 py-4 text-right pr-10">Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     {filteredPayouts.map((payout) => (
-                      <tr key={payout.id} className="hover:bg-slate-50 transition-colors">
+                      <tr key={payout.id} className="hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
                         <td className="px-6 py-4 font-medium">{format(payout.date, 'MMM d, yyyy')}</td>
-                        <td className="px-6 py-4 font-bold text-slate-700">{getMemberName(payout.memberId)}</td>
+                        <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">{getMemberName(payout.memberId)}</td>
                         <td className="px-6 py-4 text-right font-bold text-indigo-600">
                           {payout.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
                         </td>

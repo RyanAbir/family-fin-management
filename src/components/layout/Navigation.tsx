@@ -24,20 +24,24 @@ import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 
+import { TranslationKey } from "@/lib/i18n/translations";
+import { useTranslation } from "@/hooks/useTranslation";
+
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Properties", href: "/properties", icon: Building2 },
-  { name: "Family Members", href: "/family-members", icon: Users },
-  { name: "Ownership Shares", href: "/ownership-shares", icon: Percent },
-  { name: "Income", href: "/income", icon: TrendingUp },
-  { name: "Expenses", href: "/expenses", icon: TrendingDown },
-  { name: "Member Payouts", href: "/payouts", icon: Wallet },
-  { name: "Distribution", href: "/distribution", icon: History },
+  { name: "navDashboard", href: "/", icon: LayoutDashboard },
+  { name: "navProperties", href: "/properties", icon: Building2 },
+  { name: "navFamily", href: "/family-members", icon: Users },
+  { name: "navShares", href: "/ownership-shares", icon: Percent },
+  { name: "navIncome", href: "/income", icon: TrendingUp },
+  { name: "navExpenses", href: "/expenses", icon: TrendingDown },
+  { name: "navPayouts", href: "/payouts", icon: Wallet },
+  { name: "navDistribution", href: "/distribution", icon: History },
 ];
 
 function NavContent() {
   const pathname = usePathname();
   const { user, profile, logout } = useAuth();
+  const { t } = useTranslation();
   
   if (!user) return null;
 
@@ -51,7 +55,7 @@ function NavContent() {
           <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-2xl shadow-indigo-200 dark:shadow-indigo-900/40 ring-4 ring-indigo-50 dark:ring-slate-900 text-xl font-heading group-hover/logo:scale-105 transition-transform">F</div>
           <div>
             <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100 font-heading leading-tight italic">Family Finance</h1>
-            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] opacity-80">Portfolio v1.1</p>
+            <p className="text-[9px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.2em] opacity-80">{t("navPortfolio")}</p>
           </div>
         </Link>
       </div>
@@ -71,7 +75,7 @@ function NavContent() {
             >
               <div className="flex items-center gap-3.5 z-10">
                 <item.icon size={18} className={isActive ? "text-indigo-400" : "text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"} />
-                <span className="tracking-tight">{item.name}</span>
+                <span className="tracking-tight">{t(item.name as TranslationKey)}</span>
               </div>
               {isActive && (
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-transparent pointer-events-none opacity-50" />
@@ -118,7 +122,7 @@ function NavContent() {
             }`}
           >
             <Users size={16} className={pathname === "/settings/members" ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-500"} />
-            <span>Family Settings</span>
+            <span>{t("navSettings")}</span>
           </Link>
           
           <button 
@@ -127,12 +131,12 @@ function NavContent() {
             title="Logout"
           >
             <LogOut size={16} className="text-slate-300 dark:text-slate-500 group-hover/logout:text-rose-500 dark:group-hover/logout:text-rose-400 transition-colors" />
-            <span>Sign Out</span>
+            <span>{t("navSignOut")}</span>
           </button>
         </div>
 
         <div className="px-6 pb-2">
-          <p className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.3em] text-center italic">Portfolio Security v1.1.0</p>
+          <p className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.3em] text-center italic">{t("navSecurity")}</p>
         </div>
       </div>
     </div>

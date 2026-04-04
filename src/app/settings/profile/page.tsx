@@ -120,35 +120,35 @@ export default function ProfileSettingsPage() {
         <div>
           <button 
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-2 text-sm font-medium"
+            className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-100 transition-colors mb-2 text-sm font-medium"
           >
             <ArrowLeft size={16} />
             Back
           </button>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Profile Settings</h1>
-          <p className="text-slate-500 mt-1">Manage your identity and how your family sees you.</p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Profile Settings</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your identity and how your family sees you.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
         {/* Left Column: Avatar & Photo Management */}
         <div className="lg:col-span-1 space-y-6">
-          <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 text-center relative overflow-hidden group">
+          <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800/60 p-8 text-center relative overflow-hidden group">
             {/* Status Overlay */}
             {uploadStatus !== "idle" && (
               <div className="absolute inset-0 z-10 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
                 <Loader2 size={32} className="animate-spin text-indigo-600 mb-3" />
-                <p className="text-sm font-bold text-slate-900 tracking-tight">
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                   {uploadStatus === "optimizing" && "Compressing Photo..."}
                   {uploadStatus === "uploading" && "Saving Changes..."}
                   {uploadStatus === "success" && "Complete!"}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">Almost there.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Almost there.</p>
               </div>
             )}
 
             <div className="relative mx-auto w-32 h-32 mb-6">
-              <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-xl ring-1 ring-slate-100">
+              <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border-4 border-white shadow-xl ring-1 ring-slate-100">
                 {photoURL ? (
                   <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
@@ -170,13 +170,13 @@ export default function ProfileSettingsPage() {
               </label>
             </div>
             
-            <h3 className="font-bold text-slate-900 text-lg">{displayName || "Anonymous User"}</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-lg">{displayName || "Anonymous User"}</h3>
             <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mt-1">
               {profile?.role || "Viewer"}
             </p>
             
             <div className="mt-8">
-               <label className="block bg-slate-50 border border-slate-100 p-3 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer group-hover:border-slate-200">
+               <label className="block bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/40 p-3 rounded-2xl hover:bg-slate-100 dark:bg-slate-800 transition-colors cursor-pointer group-hover:border-slate-200 dark:border-slate-800/60">
                   <span className="text-xs font-bold text-slate-600">Update Profile Photo</span>
                   <input 
                     type="file" 
@@ -203,14 +203,14 @@ export default function ProfileSettingsPage() {
 
         {/* Right Column: Name & Info Form */}
         <div className="lg:col-span-2">
-          <form onSubmit={handleSave} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
             <div className="p-8 space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4">Personal Information</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800/40 pb-4">Personal Information</h3>
                 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Full Name</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
                     <div className="relative">
                       <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
@@ -219,7 +219,7 @@ export default function ProfileSettingsPage() {
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder="e.g. John Doe"
                         required
-                        className="w-full rounded-2xl border-2 border-slate-100 pl-12 pr-4 py-3.5 text-sm focus:border-indigo-600 focus:outline-none transition-colors font-medium shadow-sm shadow-slate-100"
+                        className="w-full rounded-2xl border-2 border-slate-100 dark:border-slate-800/40 pl-12 pr-4 py-3.5 text-sm focus:border-indigo-600 focus:outline-none transition-colors font-medium shadow-sm shadow-slate-100"
                       />
                     </div>
                   </div>
@@ -232,7 +232,7 @@ export default function ProfileSettingsPage() {
                         type="email" 
                         value={user.email || ""}
                         disabled
-                        className="w-full rounded-2xl border border-slate-100 bg-slate-50 pl-12 pr-4 py-3.5 text-sm text-slate-500 cursor-not-allowed font-medium"
+                        className="w-full rounded-2xl border border-slate-100 dark:border-slate-800/40 bg-slate-50 dark:bg-slate-900/50 pl-12 pr-4 py-3.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed font-medium"
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 ml-1 italic">Email cannot be changed on this screen.</p>
@@ -241,7 +241,7 @@ export default function ProfileSettingsPage() {
               </div>
             </div>
 
-            <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/40 flex justify-end">
               <button
                 type="submit"
                 disabled={isSaving}

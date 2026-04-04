@@ -153,10 +153,10 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Properties</h2>
-          <p className="text-sm text-slate-500 mt-1">Manage property records.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Properties</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage property records.</p>
         </div>
         {isMember ? (
           <button 
@@ -183,7 +183,7 @@ export default function PropertiesPage() {
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Name</label>
               <input
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.name}
@@ -193,9 +193,9 @@ export default function PropertiesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Type</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Type</label>
               <select
-                className="w-full rounded-lg border px-3 py-2.5 bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full rounded-lg border px-3 py-2.5 bg-white dark:bg-slate-900 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
                 required
@@ -208,7 +208,7 @@ export default function PropertiesPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Location</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Location</label>
               <input
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.location}
@@ -218,7 +218,7 @@ export default function PropertiesPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/40">
             <input
               type="checkbox"
               id="isActive"
@@ -226,7 +226,7 @@ export default function PropertiesPage() {
               checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
             />
-            <label htmlFor="isActive" className="text-sm font-medium text-slate-700 cursor-pointer">Property is currently Active</label>
+            <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">Property is currently Active</label>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -240,7 +240,7 @@ export default function PropertiesPage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
             >
               Cancel
             </button>
@@ -252,7 +252,7 @@ export default function PropertiesPage() {
         </form>
       </Modal>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+      <section className="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <h3 className="text-xl font-semibold mb-4">Properties</h3>
 
         {loading ? (
@@ -263,7 +263,7 @@ export default function PropertiesPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[600px]">
               <table className="min-w-full text-left text-sm">
-                  <thead className="border-b border-slate-200 text-slate-700">
+                  <thead className="border-b border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
                     <tr>
                       <th className="px-6 py-4 text-left">Property Name</th>
                       <th className="px-6 py-4 text-left">Type</th>
@@ -272,16 +272,16 @@ export default function PropertiesPage() {
                       {isMember && <th className="px-6 py-4 text-right pr-6">Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     {properties.map((property) => (
-                      <tr key={property.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">{property.name}</td>
+                      <tr key={property.id} className="hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100">{property.name}</td>
                         <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                          <span className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 uppercase">
                             {property.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-500 italic text-sm">{property.location}</td>
+                        <td className="px-6 py-4 text-slate-500 dark:text-slate-400 italic text-sm">{property.location}</td>
                         <td className="px-6 py-4 text-center">
                           <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${statusClass(property.isActive)}`}>
                             {property.isActive ? "Active" : "Inactive"}

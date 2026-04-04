@@ -146,7 +146,7 @@ export default function DistributionPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-500 text-lg">
+      <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400 text-lg">
         Loading distribution data...
       </div>
     );
@@ -154,17 +154,17 @@ export default function DistributionPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between border-b pb-4 border-slate-200">
+      <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between border-b pb-4 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Distribution Overview</h2>
-          <p className="text-sm text-slate-500 mt-1">Member earnings, running balances, and property payouts.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Distribution Overview</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Member earnings, running balances, and property payouts.</p>
         </div>
 
         {/* Month Selector */}
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 rounded-xl px-4 py-2.5 shadow-sm">
           <CalendarDays size={18} className="text-slate-400" />
           <select
-            className="text-sm font-medium text-slate-700 bg-transparent border-none outline-none cursor-pointer min-w-[140px]"
+            className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border-none outline-none cursor-pointer min-w-[140px]"
             value={selectedMonthKey}
             onChange={(e) => setSelectedMonthKey(e.target.value)}
           >

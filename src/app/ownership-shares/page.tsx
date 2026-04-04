@@ -219,10 +219,10 @@ export default function OwnershipSharesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Ownership Shares</h2>
-          <p className="text-sm text-slate-500 mt-1">Manage ownership shares by property and member.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Ownership Shares</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage ownership shares by property and member.</p>
         </div>
         {isMember ? (
           <button 
@@ -249,9 +249,9 @@ export default function OwnershipSharesPage() {
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Property</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Property</label>
               <select
-                className="w-full rounded-lg border px-3 py-2.5 bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full rounded-lg border px-3 py-2.5 bg-white dark:bg-slate-900 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.propertyId}
                 onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
                 required
@@ -266,9 +266,9 @@ export default function OwnershipSharesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Family Member</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Family Member</label>
               <select
-                className="w-full rounded-lg border px-3 py-2.5 bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full rounded-lg border px-3 py-2.5 bg-white dark:bg-slate-900 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.memberId}
                 onChange={(e) => setForm({ ...form, memberId: e.target.value })}
                 required
@@ -283,7 +283,7 @@ export default function OwnershipSharesPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Percentage Share (%)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Percentage Share (%)</label>
               <input
                 type="number"
                 step="0.01"
@@ -308,7 +308,7 @@ export default function OwnershipSharesPage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
             >
               Cancel
             </button>
@@ -318,7 +318,7 @@ export default function OwnershipSharesPage() {
         </form>
       </Modal>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+      <section className="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <h3 className="text-xl font-semibold mb-4">Ownership Shares</h3>
 
         {loading ? (
@@ -330,10 +330,10 @@ export default function OwnershipSharesPage() {
             {Object.entries(sharesByProperty).map(([propertyId, propertyShares]) => {
               const total = totalByProperty[propertyId] ?? 0;
               return (
-                <div key={propertyId} className="rounded-3xl border border-slate-200 p-6 bg-slate-50/50 hover:bg-white hover:shadow-2xl hover:shadow-slate-200 transition-all group/prop">
+                <div key={propertyId} className="rounded-3xl border border-slate-200 dark:border-slate-800/60 p-6 bg-slate-50/50 hover:bg-white dark:bg-slate-900 hover:shadow-2xl hover:shadow-slate-200 transition-all group/prop">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                       <h4 className="text-xl font-black text-slate-900 font-heading tracking-tight">{getPropertyName(propertyId)}</h4>
+                       <h4 className="text-xl font-black text-slate-900 dark:text-slate-100 font-heading tracking-tight">{getPropertyName(propertyId)}</h4>
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Property Ledger</span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -363,17 +363,17 @@ export default function OwnershipSharesPage() {
                   <div className="overflow-x-auto">
                     <div className="min-w-[500px]">
                       <table className="min-w-full text-left text-sm">
-                        <thead className="border-b border-slate-200 text-slate-700">
+                        <thead className="border-b border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
                           <tr>
-                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap">Family Member</th>
-                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap text-right">Percentage</th>
-                            <th className="px-3 py-2 text-slate-500 font-medium whitespace-nowrap text-right pr-6">Actions</th>
+                            <th className="px-3 py-2 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Family Member</th>
+                            <th className="px-3 py-2 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap text-right">Percentage</th>
+                            <th className="px-3 py-2 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap text-right pr-6">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {propertyShares.map((share) => (
-                            <tr key={share.id} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
-                              <td className="px-3 py-3 font-semibold text-slate-700">{getMemberName(share.memberId)}</td>
+                            <tr key={share.id} className="border-b last:border-b-0 hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
+                              <td className="px-3 py-3 font-semibold text-slate-700 dark:text-slate-300">{getMemberName(share.memberId)}</td>
                               <td className="px-3 py-3 font-bold text-indigo-600 text-right">{share.percentage.toFixed(2)}%</td>
                               {isMember && (
                                 <td className="px-3 py-3 text-right pr-6 space-x-2">

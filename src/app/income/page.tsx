@@ -223,10 +223,10 @@ export default function IncomePage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Income</h2>
-          <p className="text-sm text-slate-500 mt-1">Track rental income and other revenue.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Income</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Track rental income and other revenue.</p>
         </div>
         {isMember ? (
           <button 
@@ -246,23 +246,23 @@ export default function IncomePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border p-5 shadow-sm bg-white">
+        <div className="rounded-xl border p-5 shadow-sm bg-white dark:bg-slate-900">
           <p className="text-sm font-medium text-slate-600">Total Entries</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summaryStats.totalEntries}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{summaryStats.totalEntries}</p>
         </div>
-        <div className="rounded-xl border p-5 shadow-sm bg-white">
+        <div className="rounded-xl border p-5 shadow-sm bg-white dark:bg-slate-900">
           <p className="text-sm font-medium text-slate-600">Total Amount</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {summaryStats.totalAmount.toLocaleString(undefined, { style: "currency", currency: "BDT" })}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+      <section className="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Filter by Property</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Filter by Property</label>
             <select
               className="w-full rounded-lg border px-3 py-2"
               value={filters.propertyId}
@@ -277,7 +277,7 @@ export default function IncomePage() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Filter by Month</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Filter by Month</label>
             <select
               className="w-full rounded-lg border px-3 py-2"
               value={filters.monthKey}
@@ -293,7 +293,7 @@ export default function IncomePage() {
           </div>
           <button
             onClick={clearFilters}
-            className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900 hover:bg-slate-400"
+            className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900 dark:text-slate-100 hover:bg-slate-400"
           >
             Clear Filters
           </button>
@@ -309,7 +309,7 @@ export default function IncomePage() {
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Property</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Property</label>
               <select
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.propertyId}
@@ -326,7 +326,7 @@ export default function IncomePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Date</label>
               <input
                 type="date"
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -337,7 +337,7 @@ export default function IncomePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Category</label>
               <select
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 value={form.category}
@@ -358,7 +358,7 @@ export default function IncomePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (BDT)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Amount (BDT)</label>
               <input
                 type="number"
                 step="0.01"
@@ -372,11 +372,11 @@ export default function IncomePage() {
           </div>
 
           <div className={`transition-all duration-300 ${form.category === "Other Income" ? "p-4 bg-emerald-50 rounded-xl border border-emerald-200" : ""}`}>
-            <label className={`block text-sm font-medium mb-1.5 ${form.category === "Other Income" ? "text-emerald-700" : "text-slate-700"}`}>
+            <label className={`block text-sm font-medium mb-1.5 ${form.category === "Other Income" ? "text-emerald-700" : "text-slate-700 dark:text-slate-300"}`}>
               {form.category === "Other Income" ? "Please define what this 'Other' income is *" : "Description (Optional)"}
             </label>
             <textarea
-              className={`w-full rounded-lg border px-3 py-2.5 transition-all ${form.category === "Other Income" ? "border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500 bg-white" : "focus:ring-indigo-500 focus:border-indigo-500"}`}
+              className={`w-full rounded-lg border px-3 py-2.5 transition-all ${form.category === "Other Income" ? "border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-slate-900" : "focus:ring-indigo-500 focus:border-indigo-500"}`}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={form.category === "Other Income" ? 2 : 3}
@@ -396,7 +396,7 @@ export default function IncomePage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
             >
               Cancel
             </button>
@@ -407,7 +407,7 @@ export default function IncomePage() {
       </Modal>
 
       {/* Table */}
-      <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+      <section className="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <h3 className="text-xl font-semibold mb-4">Income Entries</h3>
 
         {loading ? (
@@ -418,7 +418,7 @@ export default function IncomePage() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="min-w-full text-left text-sm">
-                  <thead className="border-b border-slate-200 text-slate-700">
+                  <thead className="border-b border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
                     <tr>
                       <th className="px-6 py-4 text-left">Date</th>
                       <th className="px-6 py-4 text-left">Property</th>
@@ -427,17 +427,17 @@ export default function IncomePage() {
                       {isMember && <th className="px-6 py-4 text-right pr-10">Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     {filteredEntries.map((entry) => (
-                      <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                      <tr key={entry.id} className="hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
                         <td className="px-6 py-4 font-medium">{format(entry.date, 'MMM d, yyyy')}</td>
                         <td className="px-6 py-4">{getPropertyName(entry.propertyId)}</td>
                         <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                          <span className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 uppercase">
                             {entry.category}
                           </span>
                           {entry.description && (
-                            <span className="ml-2 text-xs text-slate-500 italic">
+                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400 italic">
                                ({entry.description})
                             </span>
                           )}

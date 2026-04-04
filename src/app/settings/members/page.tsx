@@ -137,10 +137,10 @@ export default function MembersSettingsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-6 border-slate-200">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-6 border-slate-200 dark:border-slate-800/60">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Family Members</h2>
-          <p className="text-sm text-slate-500 mt-1">Manage access and invite new members to the dashboard.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Family Members</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage access and invite new members to the dashboard.</p>
         </div>
         {isMember && (
           <button 
@@ -164,7 +164,7 @@ export default function MembersSettingsPage() {
                 <h3 className="text-lg font-bold text-indigo-900 mb-1">New Invitation Created</h3>
                 <p className="text-sm text-indigo-700 mb-4 font-medium italic">This link allows one person to join as a Member. Valid for 24 hours.</p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                   <div className="flex-1 bg-white border border-indigo-200 rounded-xl px-4 py-3 text-sm font-mono text-indigo-600 truncate">
+                   <div className="flex-1 bg-white dark:bg-slate-900 border border-indigo-200 rounded-xl px-4 py-3 text-sm font-mono text-indigo-600 truncate">
                       {inviteLink}
                    </div>
                    <button 
@@ -180,9 +180,9 @@ export default function MembersSettingsPage() {
       )}
 
       <div className="grid gap-6">
-        <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+        <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/40 bg-slate-50/50 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Users size={16} className="text-indigo-600" />
               Registered Users
             </h3>
@@ -190,7 +190,7 @@ export default function MembersSettingsPage() {
           </div>
           
           {/* Mobile Card Layout */}
-          <div className="lg:hidden divide-y divide-slate-100">
+          <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
             {members.map((m) => {
               const joinedAt = m.createdAt instanceof Date 
                 ? m.createdAt 
@@ -204,8 +204,8 @@ export default function MembersSettingsPage() {
                     <div className="flex items-center gap-3">
                       <img src={m.photoURL || ""} alt={m.displayName} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
                       <div>
-                        <p className="text-sm font-bold text-slate-900">{m.displayName}</p>
-                        <p className="text-[10px] text-slate-500">{m.email}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{m.displayName}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">{m.email}</p>
                       </div>
                     </div>
                     <span className="h-2 w-2 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
@@ -218,7 +218,7 @@ export default function MembersSettingsPage() {
                             <select
                               defaultValue={m.role}
                               onChange={(e) => handleRoleChange(m.uid, e.target.value as UserRole)}
-                              className="bg-slate-50 border border-slate-200 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-0.5 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                              className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-0.5 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                             >
                               <option value="viewer">Viewer</option>
                               <option value="member">Member</option>
@@ -231,7 +231,7 @@ export default function MembersSettingsPage() {
                               m.role === 'admin' ? 'bg-amber-100 text-amber-700' :
                               m.role === 'member' ? 'bg-indigo-100 text-indigo-700' :
                               m.role === 'banned' ? 'bg-rose-100 text-rose-700 shadow-sm shadow-rose-200' :
-                              'bg-slate-100 text-slate-600'
+                              'bg-slate-100 dark:bg-slate-800 text-slate-600'
                             }`}>
                               {m.role === 'super_admin' && <ShieldCheck size={10} />}
                               {m.role === 'admin' && <ShieldCheck size={10} />}
@@ -246,7 +246,7 @@ export default function MembersSettingsPage() {
                     <div className="flex flex-col gap-1 items-end text-right">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Joined</p>
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium font-heading">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium font-heading">
                           <Clock size={12} className="text-slate-400" />
                           {joinedAt.toLocaleDateString()}
                         </div>
@@ -271,14 +271,14 @@ export default function MembersSettingsPage() {
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
+                <tr className="border-b border-slate-100 dark:border-slate-800/40 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Role</th>
                   <th className="px-6 py-4">Joined At</th>
                   <th className="px-6 py-4 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {members.map((m) => {
                   const joinedAt = m.createdAt instanceof Date 
                     ? m.createdAt 
@@ -292,8 +292,8 @@ export default function MembersSettingsPage() {
                         <div className="flex items-center gap-3">
                            <img src={m.photoURL || ""} alt={m.displayName} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
                            <div>
-                              <p className="text-sm font-bold text-slate-900">{m.displayName}</p>
-                              <p className="text-xs text-slate-500">{m.email}</p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{m.displayName}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{m.email}</p>
                            </div>
                         </div>
                       </td>
@@ -303,7 +303,7 @@ export default function MembersSettingsPage() {
                             <select
                               defaultValue={m.role}
                               onChange={(e) => handleRoleChange(m.uid, e.target.value as UserRole)}
-                              className="bg-slate-50 border border-slate-200 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                              className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                             >
                               <option value="viewer">Viewer</option>
                               <option value="member">Member</option>
@@ -316,7 +316,7 @@ export default function MembersSettingsPage() {
                                 m.role === 'admin' ? 'bg-amber-100 text-amber-700' :
                                 m.role === 'member' ? 'bg-indigo-100 text-indigo-700' :
                                 m.role === 'banned' ? 'bg-rose-100 text-rose-700 animate-pulse' :
-                                'bg-slate-100 text-slate-600'
+                                'bg-slate-100 dark:bg-slate-800 text-slate-600'
                             }`}>
                                 {m.role === 'super_admin' && <ShieldCheck size={12} />}
                                 {m.role === 'admin' && <ShieldCheck size={12} />}
@@ -329,7 +329,7 @@ export default function MembersSettingsPage() {
                        </div>
                     </td>
                       <td className="px-6 py-4">
-                         <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
                             <Clock size={14} className="text-slate-400" />
                             {joinedAt.toLocaleDateString()}
                          </div>
@@ -367,22 +367,22 @@ export default function MembersSettingsPage() {
 
         {/* Super Admin Management Tools */}
         {isAdmin && (
-           <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
-             <div className="p-6 border-b border-slate-100 bg-indigo-50/30">
-               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+           <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden mt-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+             <div className="p-6 border-b border-slate-100 dark:border-slate-800/40 bg-indigo-50/30">
+               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <ShieldCheck className="text-indigo-600" size={20} />
                   Inheritance Database Management
                </h3>
-               <p className="text-xs text-slate-500 mt-1">Tools to ensure the family ownership records are synchronized and balanced.</p>
+               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Tools to ensure the family ownership records are synchronized and balanced.</p>
              </div>
              <div className="p-8">
-               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
+               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="text-center md:text-left">
-                     <p className="text-sm font-bold text-slate-900 flex items-center gap-2 justify-center md:justify-start">
+                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 justify-center md:justify-start">
                         <Users size={16} className="text-indigo-500" />
                         Sync All Ownership Shares
                      </p>
-                     <p className="text-xs text-slate-500 mt-1 max-w-md leading-relaxed">
+                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md leading-relaxed">
                         This will scan all properties and family members, link any missing shares, and instantly rebalance percentages using the 2:1 Shariah rule (Son=2x, others=1x).
                      </p>
                   </div>
