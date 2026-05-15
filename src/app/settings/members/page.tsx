@@ -194,8 +194,8 @@ export default function MembersSettingsPage() {
             {members.map((m) => {
               const joinedAt = m.createdAt instanceof Date 
                 ? m.createdAt 
-                : m.createdAt && typeof (m.createdAt as any).toDate === 'function' 
-                  ? (m.createdAt as any).toDate() 
+                : m.createdAt && typeof (m.createdAt as unknown).toDate === 'function' 
+                  ? (m.createdAt as unknown).toDate() 
                   : new Date();
 
               return (
@@ -282,8 +282,8 @@ export default function MembersSettingsPage() {
                 {members.map((m) => {
                   const joinedAt = m.createdAt instanceof Date 
                     ? m.createdAt 
-                    : m.createdAt && typeof (m.createdAt as any).toDate === 'function' 
-                      ? (m.createdAt as any).toDate() 
+                    : m.createdAt && typeof (m.createdAt as unknown).toDate === 'function' 
+                      ? (m.createdAt as unknown).toDate() 
                       : new Date();
 
                   return (
@@ -409,3 +409,4 @@ export default function MembersSettingsPage() {
     </div>
   );
 }
+

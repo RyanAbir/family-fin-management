@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -215,4 +214,5 @@ export function useAuth() {
   }
   return context;
 }
+
 

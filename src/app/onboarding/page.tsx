@@ -28,7 +28,7 @@ export default function OnboardingPage() {
               Welcome to your <br /><span className="text-indigo-600 italic">Financial Legacy.</span>
             </h1>
             <p className="text-slate-500 font-medium leading-relaxed">
-              To keep your family's records secure and accurate, we need to link your login to your member identity. 
+              To keep your family&apos;s records secure and accurate, we need to link your login to your member identity. 
             </p>
           </div>
           
@@ -51,7 +51,7 @@ export default function OnboardingPage() {
               </div>
               <div className="flex-1 space-y-1">
                 <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight">Claim My Profile</h3>
-                <p className="text-sm text-slate-400 font-medium">I'm already in the family member list. Let me select my name.</p>
+                <p className="text-sm text-slate-400 font-medium">I&apos;m already in the family member list. Let me select my name.</p>
               </div>
             </div>
           </Link>
@@ -63,7 +63,7 @@ export default function OnboardingPage() {
               </div>
               <div className="flex-1 space-y-1 text-white">
                 <h3 className="text-xl font-black font-heading tracking-tight">Create New Profile</h3>
-                <p className="text-sm text-slate-500 font-medium">I'm new here. Create an inherited member record for me automatically.</p>
+                <p className="text-sm text-slate-500 font-medium">I&apos;m new here. Create an inherited member record for me automatically.</p>
               </div>
             </div>
           </Link>
@@ -74,3 +74,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

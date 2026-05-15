@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { getAllProperties } from "./properties";
 import { getActiveFamilyMembers } from "./familyMembers";
 import { syncSharesForProperty } from "./ownershipShares";
@@ -20,9 +19,11 @@ export const syncAllFamilyShares = async (): Promise<{ success: boolean; propert
     }
 
     return { success: true, propertyCount: properties.length };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Sync Error:", error);
-    return { success: false, propertyCount: 0, error: error.message };
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, propertyCount: 0, error: errorMessage };
   }
 };
+
 

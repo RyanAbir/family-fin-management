@@ -196,7 +196,7 @@ export default function FamilyMembersPage() {
              <select
                className="w-full rounded-xl border border-slate-200 dark:border-slate-800/60 px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                value={form.relation}
-               onChange={(e) => setForm({ ...form, relation: e.target.value as any })}
+               onChange={(e) => setForm({ ...form, relation: e.target.value as "son" | "daughter" | "mother" | "other" })}
                required
              >
                <option value="son">Son (Inherit 2.0x)</option>
@@ -325,3 +325,4 @@ export default function FamilyMembersPage() {
     </div>
   );
 }
+

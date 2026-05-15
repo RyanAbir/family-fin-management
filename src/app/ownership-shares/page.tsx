@@ -204,7 +204,7 @@ export default function OwnershipSharesPage() {
         updateOwnershipShare(item.id, { 
           percentage: item.percentage,
           updatedAt: new Date()
-        } as any)
+        } as unknown)
       ));
 
       toast.success("Shariah distribution applied successfully!");
@@ -406,3 +406,4 @@ export default function OwnershipSharesPage() {
     </div>
   );
 }
+

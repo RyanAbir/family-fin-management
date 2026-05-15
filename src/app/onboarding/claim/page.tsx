@@ -50,7 +50,7 @@ export default function ClaimProfilePage() {
         linkedUid: user.uid,
         linkedEmail: user.email || undefined,
         updatedAt: new Date()
-      } as any);
+      } as unknown);
 
       toast.success("Profile claimed successfully!");
       router.push("/");
@@ -132,3 +132,4 @@ export default function ClaimProfilePage() {
     </div>
   );
 }
+

@@ -1,10 +1,7 @@
-/* eslint-disable */
 import { 
   collection, 
   addDoc, 
-  getDocs, 
   query, 
-  where, 
   orderBy, 
   limit, 
   onSnapshot, 
@@ -27,7 +24,7 @@ export const createNotification = async (
   targetId?: string,
   targetTab?: string
 ) => {
-  const notificationData: any = {
+  const notificationData: Record<string, unknown> = {
     message,
     type,
     creatorName,
@@ -70,4 +67,5 @@ export const markNotificationAsRead = async (notificationId: string, userUid: st
     readBy: arrayUnion(userUid),
   });
 };
+
 

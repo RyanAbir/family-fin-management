@@ -19,7 +19,7 @@ export default function BannedPage() {
         <div className="space-y-2">
            <h1 className="text-3xl font-black text-slate-900 font-heading tracking-tight">Access Restricted</h1>
            <p className="text-slate-500 font-medium leading-relaxed">
-              Your account has been deactivated by the Super Admin. You no longer have access to the family's financial dashboard.
+              Your account has been deactivated by the Super Admin. You no longer have access to the family&apos;s financial dashboard.
            </p>
         </div>
 

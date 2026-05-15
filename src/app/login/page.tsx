@@ -57,8 +57,8 @@ export default function LoginPage() {
     try {
       if (method === "google") await signInWithGoogle();
       else await signInWithApple();
-    } catch (err: any) {
-      toast.error(err.message || `Failed to sign in with ${method}`);
+    } catch (err: unknown) {
+      toast.error((err as Error).message || `Failed to sign in with ${method}`);
       setIsSigningIn(false);
     }
   };
@@ -74,8 +74,8 @@ export default function LoginPage() {
         await signInWithEmail(email, password);
         toast.success("Logged in successfully!");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Authentication failed");
       setIsSigningIn(false);
     }
   };
@@ -89,8 +89,8 @@ export default function LoginPage() {
       const result = await signInWithPhone(formattedPhone, "recaptcha-container");
       setConfirmationResult(result);
       toast.success("OTP sent to your phone!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send OTP");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Failed to send OTP");
     } finally {
       setIsSigningIn(false);
     }
@@ -103,7 +103,7 @@ export default function LoginPage() {
     try {
       await confirmationResult.confirm(verificationCode);
       toast.success("Phone verified!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Invalid OTP code. Please try again.");
       setIsSigningIn(false);
     }
@@ -325,3 +325,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

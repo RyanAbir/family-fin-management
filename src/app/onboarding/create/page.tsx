@@ -35,7 +35,7 @@ export default function CreateProfilePage() {
         linkedEmail: user.email || undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as any);
+      } as unknown);
 
       // 2. Link the user account to this new profile
       await updateDoc(doc(db, "userProfiles", user.uid), {
@@ -171,3 +171,4 @@ export default function CreateProfilePage() {
     </div>
   );
 }
+

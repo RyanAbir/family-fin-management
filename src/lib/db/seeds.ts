@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { 
   collection, 
   addDoc, 
@@ -127,9 +126,10 @@ export const seedDemoData = async () => {
 
     console.log("Seeding complete!");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Seeding failed:", err);
     throw err;
   }
 };
+
 

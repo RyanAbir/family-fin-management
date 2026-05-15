@@ -80,7 +80,7 @@ export default function ProfileSettingsPage() {
       
       // Reset status after a delay
       setTimeout(() => setUploadStatus("idle"), 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Profile update failed:", error);
       toast.error("Failed to process photo.");
       setUploadStatus("idle");
@@ -106,8 +106,8 @@ export default function ProfileSettingsPage() {
       }
 
       toast.success("Profile updated!");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update profile.");
+    } catch (error: unknown) {
+      toast.error((error as Error).message || "Failed to update profile.");
     } finally {
       setIsSaving(false);
     }
@@ -266,3 +266,4 @@ export default function ProfileSettingsPage() {
     </div>
   );
 }
+

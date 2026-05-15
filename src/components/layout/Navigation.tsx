@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -151,7 +150,9 @@ export function Navigation() {
 
   // Close sidebar when navigating on mobile
   useEffect(() => {
-    setIsOpen(false);
+    requestAnimationFrame(() => {
+      setIsOpen(false);
+    });
   }, [pathname]);
 
   // Prevent scrolling when sidebar is open on mobile
@@ -224,4 +225,5 @@ export function Navigation() {
     </>
   );
 }
+
 

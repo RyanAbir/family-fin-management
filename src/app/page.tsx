@@ -63,7 +63,7 @@ function MetricCard({
   trend?: { value: number; isPositive: boolean };
   color: "indigo" | "emerald" | "rose" | "amber" | "slate";
   icon: React.ElementType;
-  chartData?: any[];
+  chartData?: Record<string, unknown>[];
 }) {
   const colorMap = {
     indigo: "from-indigo-500 to-violet-600 shadow-indigo-100 ring-indigo-50",
@@ -522,3 +522,4 @@ export default function Dashboard() {
 
 // Ensure Building2 is imported
 import { Building2 } from "lucide-react";
+

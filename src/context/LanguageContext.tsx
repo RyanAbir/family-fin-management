@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -18,11 +17,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const storedLang = localStorage.getItem("app-language") as Language | null;
-    if (storedLang === "EN" || storedLang === "BN") {
-      setLanguageState(storedLang);
-    }
+    requestAnimationFrame(() => {
+      setMounted(true);
+      const storedLang = localStorage.getItem("app-language") as Language | null;
+      if (storedLang === "EN" || storedLang === "BN") {
+        setLanguageState(storedLang);
+      }
+    });
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -54,4 +55,5 @@ export function useLanguage() {
   }
   return context;
 }
+
 
