@@ -173,11 +173,15 @@ export default function FamilyMembersPage() {
       userProfile.assignedFamilyMemberId
     );
     const isAlreadyLinkedInMember = members.some((member) => getMemberLinkedUserId(member) === userProfile.uid);
-    return (
-      (userProfile.role === "viewer" || userProfile.role === "member") && 
-      !isAlreadyLinkedInUserProfile && 
-      !isAlreadyLinkedInMember
-    );
+    const isValidRole = userProfile.role === "viewer" || userProfile.role === "member";
+    const isIncluded = isValidRole && !isAlreadyLinkedInUserProfile && !isAlreadyLinkedInMember;
+    
+    // Debug log for specific user
+    if (userProfile.email === "ryanabir.info@gmail.com" || userProfile.email === "info.ryanabir@gmail.com") {
+      console.log(`[AssignUserDebug] ${userProfile.email}: role=${userProfile.role}, isAlreadyLinkedInUserProfile=${isAlreadyLinkedInUserProfile}, isAlreadyLinkedInMember=${isAlreadyLinkedInMember} -> INCLUDED=${isIncluded}`);
+    }
+
+    return isIncluded;
   });
 
   const unassignedMembers = members.filter((member) => !getMemberLinkedUserId(member));

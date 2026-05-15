@@ -74,13 +74,20 @@ const unlinkUserFromFamilyMember = async (uid: string, userData: DocumentData): 
   addMemberRef(memberRefs, userData.linkedFamilyMemberId);
   addMemberRef(memberRefs, userData.assignedFamilyMemberId);
 
-  const [linkedUserIdSnapshot, linkedUidSnapshot] = await Promise.all([
+  const queries = [
     getDocs(query(collection(db, "family_members"), where("linkedUserId", "==", uid))),
     getDocs(query(collection(db, "family_members"), where("linkedUid", "==", uid))),
-  ]);
+  ];
 
-  linkedUserIdSnapshot.docs.forEach((snapshot) => memberRefs.set(snapshot.id, snapshot.ref));
-  linkedUidSnapshot.docs.forEach((snapshot) => memberRefs.set(snapshot.id, snapshot.ref));
+  if (typeof userData.email === "string" && userData.email.length > 0) {
+    queries.push(getDocs(query(collection(db, "family_members"), where("linkedEmail", "==", userData.email))));
+  }
+
+  const snapshots = await Promise.all(queries);
+
+  snapshots.forEach((snapshot) => {
+    snapshot.docs.forEach((docSnap) => memberRefs.set(docSnap.id, docSnap.ref));
+  });
 
   const memberUnlinkData: Record<string, FieldValue> = {
     linkedUserId: deleteField(),
@@ -119,9 +126,7 @@ export const updateUserRole = async (uid: string, newRole: UserRole) => {
   }
 
   const userData = userSnapshot.data();
-  const isResetToViewer = newRole === "viewer" && Boolean(
-    userData.familyMemberId || userData.linkedFamilyMemberId || userData.assignedFamilyMemberId || userData.role === "member"
-  );
+  const isResetToViewer = newRole === "viewer";
 
   if (isResetToViewer) {
     await unlinkUserFromFamilyMember(uid, userData);
