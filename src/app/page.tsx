@@ -374,14 +374,14 @@ export default function Dashboard() {
 
         {/* Share Distribution */}
         <section className="rounded-[2.5rem] border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900 p-8 shadow-sm hover:shadow-xl transition-shadow flex flex-col">
-          <div className="mb-10">
+          <div className="mb-6">
              <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 font-heading tracking-tight flex items-center gap-2">
                 <PieIcon className="text-indigo-500" size={24} />
                 {t("equitySplit")}
              </h3>
              <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">{t("splitSub")}</p>
           </div>
-          <div className="h-64 w-full flex-1 min-h-[300px]">
+          <div className="h-56 w-full flex-1 min-h-[220px]">
             {familyDistribution && familyDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -413,7 +413,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
              {familyDistribution.map((entry, index) => (
                <div key={entry.name} className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
                   <div className="flex items-center gap-2 mb-1">
