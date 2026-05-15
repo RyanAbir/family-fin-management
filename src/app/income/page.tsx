@@ -23,7 +23,7 @@ const initialForm = {
   monthKey: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
   category: "Rent",
   description: "",
-  amount: 0,
+  amount: "" as string | number,
 };
 
 const incomeCategories = ["Rent", "Advance Adjustment", "Other Income"];
@@ -111,8 +111,9 @@ export default function IncomePage() {
       setError("Category is required.");
       return false;
     }
-    if (form.amount <= 0) {
-      setError("Amount must be greater than 0.");
+    const numAmount = Number(form.amount);
+    if (form.amount === "" || isNaN(numAmount) || !isFinite(numAmount) || numAmount <= 0) {
+      setError("Amount must be a valid number greater than 0.");
       return false;
     }
     if (form.category === "Other Income" && (!form.description || form.description.trim() === "")) {
@@ -138,11 +139,12 @@ export default function IncomePage() {
           monthKey: form.monthKey,
           category: form.category,
           description: form.description,
-          amount: form.amount,
+          amount: Number(form.amount),
         });
       } else {
         await createIncomeEntry({
           ...form,
+          amount: Number(form.amount),
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -151,7 +153,7 @@ export default function IncomePage() {
         if (profile) {
           const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
           await createNotification(
-            `Added income: ${form.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
+            `Added income: ${Number(form.amount).toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
             "income",
             creatorName,
             form.propertyId,
@@ -365,7 +367,7 @@ export default function IncomePage() {
                 min="0.01"
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-medium text-indigo-600"
                 value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, amount: e.target.value === "" ? "" : e.target.value })}
                 required
               />
             </div>

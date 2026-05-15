@@ -18,11 +18,11 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const initialDate = new Date();
-const initialForm: Omit<MemberPayout, "id" | "createdAt" | "updatedAt"> = {
+const initialForm: Omit<MemberPayout, "id" | "createdAt" | "updatedAt" | "amount"> & { amount: string | number } = {
   memberId: "",
   date: initialDate,
   monthKey: `${initialDate.getFullYear()}-${String(initialDate.getMonth() + 1).padStart(2, "0")}`,
-  amount: 0,
+  amount: "" as string | number,
   description: "",
 };
 
@@ -107,8 +107,9 @@ export default function MemberPayoutsPage() {
       setError("Month key is required.");
       return false;
     }
-    if (form.amount <= 0) {
-      setError("Amount must be greater than 0.");
+    const numAmount = Number(form.amount);
+    if (form.amount === "" || isNaN(numAmount) || !isFinite(numAmount) || numAmount <= 0) {
+      setError("Amount must be a valid number greater than 0.");
       return false;
     }
     return true;
@@ -128,12 +129,13 @@ export default function MemberPayoutsPage() {
           memberId: form.memberId,
           date: form.date,
           monthKey: form.monthKey,
-          amount: form.amount,
+          amount: Number(form.amount),
           description: form.description,
         });
       } else {
         await createMemberPayout({
           ...form,
+          amount: Number(form.amount),
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -338,7 +340,7 @@ export default function MemberPayoutsPage() {
                 min="0.01"
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-medium text-rose-600"
                 value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, amount: e.target.value === "" ? "" : e.target.value })}
                 required
               />
             </div>

@@ -18,13 +18,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const initialDate = new Date();
-const initialForm: Omit<ExpenseEntry, "id" | "createdAt" | "updatedAt"> = {
+const initialForm: Omit<ExpenseEntry, "id" | "createdAt" | "updatedAt" | "amount"> & { amount: string | number } = {
   propertyId: "",
   date: initialDate,
   monthKey: `${initialDate.getFullYear()}-${String(initialDate.getMonth() + 1).padStart(2, "0")}`,
   category: "",
   description: "",
-  amount: 0,
+  amount: "" as string | number,
 };
 
 const expenseCategories = ["Maintenance", "Utility", "Tax", "Staff", "Other Expense"];
@@ -115,8 +115,9 @@ export default function ExpensesPage() {
       setError("Category is required.");
       return false;
     }
-    if (form.amount <= 0) {
-      setError("Amount must be greater than 0.");
+    const numAmount = Number(form.amount);
+    if (form.amount === "" || isNaN(numAmount) || !isFinite(numAmount) || numAmount <= 0) {
+      setError("Amount must be a valid number greater than 0.");
       return false;
     }
     if ((form.category === "Other Expense" || form.category === "Utility") && (!form.description || form.description.trim() === "")) {
@@ -146,11 +147,12 @@ export default function ExpensesPage() {
           monthKey: form.monthKey,
           category: form.category,
           description: form.description,
-          amount: form.amount,
+          amount: Number(form.amount),
         });
       } else {
         await createExpenseEntry({
           ...form,
+          amount: Number(form.amount),
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -159,7 +161,7 @@ export default function ExpensesPage() {
         if (profile) {
           const creatorName = profile.role === "super_admin" ? "System Administrator" : profile.displayName;
           await createNotification(
-            `Added expense: ${form.amount.toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
+            `Added expense: ${Number(form.amount).toLocaleString(undefined, { style: "currency", currency: "BDT" })} for ${getPropertyName(form.propertyId)}`,
             "expense",
             creatorName,
             form.propertyId,
@@ -374,7 +376,7 @@ export default function ExpensesPage() {
                 min="0.01"
                 className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-black text-rose-600"
                 value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, amount: e.target.value === "" ? "" : e.target.value })}
                 required
               />
             </div>
