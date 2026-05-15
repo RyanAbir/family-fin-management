@@ -58,6 +58,17 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
+/* Global Select Option Styling for Dark Mode Visibility */
+select option {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+.dark select option {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
 /* Premium Utility Classes */
 .glass {
   @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-slate-200/50;
