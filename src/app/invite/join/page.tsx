@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { validateInvitation, useInvitation as acceptInvitation } from "@/lib/db/invites";
+import type { Invitation } from "@/types";
 import { UserPlus, CheckCircle, XCircle, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ function InviteJoinContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [invitation, setInvitation] = useState<Record<string, unknown> | null>(null);
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +29,7 @@ function InviteJoinContent() {
 
       const result = await validateInvitation(token);
       if (result.valid) {
-        setInvitation((result.invite as Record<string, unknown>) || null);
+        setInvitation(result.invite ?? null);
       } else {
         setError(result.message || "Invalid or expired invitation.");
       }
@@ -43,10 +44,11 @@ function InviteJoinContent() {
       toast.error("Please sign in first.");
       return;
     }
+    if (!invitation) return;
 
     setIsProcessing(true);
     try {
-      await acceptInvitation(invitation.id as string, user.uid);
+      await acceptInvitation(invitation.id, user.uid);
       toast.success(`Success! You are now a ${invitation.role} of the family.`);
       router.push("/");
     } catch (err) {
@@ -82,6 +84,8 @@ function InviteJoinContent() {
     );
   }
 
+  if (!invitation) return null;
+
   return (
     <div className="max-w-md mx-auto mt-12 mb-12">
       <div className="bg-white rounded-3xl shadow-2xl border border-indigo-50 p-8 text-center animate-in zoom-in-95 duration-500">
@@ -91,7 +95,7 @@ function InviteJoinContent() {
         
         <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">You&apos;re Invited!</h2>
         <p className="text-slate-500 mb-8 text-sm">
-          <span className="font-bold text-indigo-600">{String(invitation.inviterName)}</span> has invited you to join the dashboard as a <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-bold uppercase text-[10px] tracking-wider">{String(invitation.role)}</span>.
+          <span className="font-bold text-indigo-600">{invitation.inviterName}</span> has invited you to join the dashboard as a <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-bold uppercase text-[10px] tracking-wider">{invitation.role}</span>.
         </p>
 
         {!user ? (
