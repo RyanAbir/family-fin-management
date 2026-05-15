@@ -109,7 +109,7 @@ export function FamilySummaryTable({ memberSummaries }: FamilySummaryTableProps)
               {memberSummary.properties.length > 0 && (
                 <div className="px-5 py-4 border-t border-slate-100">
                   <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
-                    <Building2 size={13} /> This Month's Property Breakdown
+                    <Building2 size={13} /> This Month&apos;s Property Breakdown
                   </h5>
                   <div className="space-y-2">
                     {memberSummary.properties.map((property) => (

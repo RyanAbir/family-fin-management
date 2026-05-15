@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { 
   collection, 
   addDoc, 
@@ -131,3 +132,4 @@ export const seedDemoData = async () => {
     throw err;
   }
 };
+

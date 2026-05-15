@@ -109,7 +109,7 @@ function MetricCard({
         {subtitle && <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{subtitle}</p>}
       </div>
 
-      {chartData && (
+      {chartData && chartData.length > 0 && (
         <div className="h-12 w-full mt-4 -mx-2 opacity-50 group-hover:opacity-100 transition-opacity">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
@@ -339,29 +339,36 @@ export default function Dashboard() {
              </div>
           </div>
           <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" opacity={0.2} />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
-                <Tooltip
-                  cursor={{ fill: "#f8fafc", opacity: 0.1, radius: 8 }}
-                  contentStyle={{ 
-                    borderRadius: '20px', 
-                    border: 'none', 
-                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.2)',
-                    padding: '16px',
-                    backgroundColor: '#1e293b',
-                    color: '#f8fafc'
-                  }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [`৳ ${Number(value).toLocaleString()}`, undefined]}
-                />
-                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
-                <Bar dataKey="income" name={t("income")} fill="#4f46e5" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="expense" name={t("spending")} fill="#f43f5e" radius={[6, 6, 0, 0]} maxBarSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+            {chartData && chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" opacity={0.2} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
+                  <Tooltip
+                    cursor={{ fill: "#f8fafc", opacity: 0.1, radius: 8 }}
+                    contentStyle={{ 
+                      borderRadius: '20px', 
+                      border: 'none', 
+                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.2)',
+                      padding: '16px',
+                      backgroundColor: '#1e293b',
+                      color: '#f8fafc'
+                    }}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(value: any) => [`৳ ${Number(value).toLocaleString()}`, undefined]}
+                  />
+                  <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
+                  <Bar dataKey="income" name={t("income") || "Income"} fill="#4f46e5" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="expense" name={t("spending") || "Spending"} fill="#f43f5e" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <BarChart3 className="mb-2 opacity-20" size={32} />
+                <p className="text-xs font-bold uppercase tracking-widest">No Data Available</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -375,29 +382,36 @@ export default function Dashboard() {
              <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">{t("splitSub")}</p>
           </div>
           <div className="h-64 w-full flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={familyDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
-                  paddingAngle={8}
-                  dataKey="value"
-                  animationBegin={200}
-                >
-                  {familyDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={2} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [formatCurrency(Number(value)), t('share')]}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2)', backgroundColor: '#1e293b', color: '#f8fafc' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {familyDistribution && familyDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={familyDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={8}
+                    dataKey="value"
+                    animationBegin={200}
+                  >
+                    {familyDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(value: any) => [formatCurrency(Number(value)), t('share') || "Share"]}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2)', backgroundColor: '#1e293b', color: '#f8fafc' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <PieIcon className="mb-2 opacity-20" size={32} />
+                <p className="text-xs font-bold uppercase tracking-widest">No Data Available</p>
+              </div>
+            )}
           </div>
           <div className="mt-8 grid grid-cols-2 gap-3">
              {familyDistribution.map((entry, index) => (

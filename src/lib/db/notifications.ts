@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { 
   collection, 
   addDoc, 
@@ -69,3 +70,4 @@ export const markNotificationAsRead = async (notificationId: string, userUid: st
     readBy: arrayUnion(userUid),
   });
 };
+

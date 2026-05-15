@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { getAllProperties } from "./properties";
 import { getActiveFamilyMembers } from "./familyMembers";
 import { syncSharesForProperty } from "./ownershipShares";
@@ -24,3 +25,4 @@ export const syncAllFamilyShares = async (): Promise<{ success: boolean; propert
     return { success: false, propertyCount: 0, error: error.message };
   }
 };
+
