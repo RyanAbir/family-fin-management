@@ -90,8 +90,19 @@ const unlinkUserFromFamilyMember = async (uid: string, userData: DocumentData): 
     assignedBy: deleteField(),
   };
 
-  await Promise.all(
-    Array.from(memberRefs.values()).map((memberRef) => updateDoc(memberRef, memberUnlinkData))
+  await Promise.allSettled(
+    Array.from(memberRefs.values()).map(async (memberRef) => {
+      try {
+        await updateDoc(memberRef, memberUnlinkData);
+      } catch (error: unknown) {
+        // Ignore "not-found" errors if the family member was already deleted
+        if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code !== 'not-found') {
+          console.error("Error unlinking family member:", error);
+        } else if (!(typeof error === 'object' && error !== null && 'code' in error)) {
+          console.error("Error unlinking family member:", error);
+        }
+      }
+    })
   );
 };
 
@@ -108,16 +119,17 @@ export const updateUserRole = async (uid: string, newRole: UserRole) => {
   }
 
   const userData = userSnapshot.data();
-  const currentRole = typeof userData.role === "string" ? userData.role : "viewer";
-  const isMemberResetToViewer = currentRole === "member" && newRole === "viewer";
+  const isResetToViewer = newRole === "viewer" && Boolean(
+    userData.familyMemberId || userData.linkedFamilyMemberId || userData.assignedFamilyMemberId || userData.role === "member"
+  );
 
-  if (isMemberResetToViewer) {
+  if (isResetToViewer) {
     await unlinkUserFromFamilyMember(uid, userData);
   }
 
   await updateDoc(userRef, {
     role: newRole,
-    ...(isMemberResetToViewer
+    ...(isResetToViewer
       ? {
           familyMemberId: deleteField(),
           linkedFamilyMemberId: deleteField(),

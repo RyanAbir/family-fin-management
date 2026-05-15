@@ -167,8 +167,17 @@ export default function FamilyMembersPage() {
   const getMemberLinkedUserId = (member: FamilyMember) => member.linkedUserId ?? member.linkedUid;
 
   const unassignedUsers = users.filter((userProfile) => {
+    const isAlreadyLinkedInUserProfile = Boolean(
+      userProfile.familyMemberId || 
+      userProfile.linkedFamilyMemberId || 
+      userProfile.assignedFamilyMemberId
+    );
     const isAlreadyLinkedInMember = members.some((member) => getMemberLinkedUserId(member) === userProfile.uid);
-    return userProfile.role === "viewer" && !isAlreadyLinkedInMember;
+    return (
+      (userProfile.role === "viewer" || userProfile.role === "member") && 
+      !isAlreadyLinkedInUserProfile && 
+      !isAlreadyLinkedInMember
+    );
   });
 
   const unassignedMembers = members.filter((member) => !getMemberLinkedUserId(member));
