@@ -6,8 +6,11 @@ import {
   createFamilyMember,
   updateFamilyMember,
   deleteFamilyMember,
+  assignUserToFamilyMember,
+  createFamilyMemberAndAssignUser,
 } from "@/lib/db/familyMembers";
-import type { FamilyMember } from "@/types";
+import { getAllUserProfiles } from "@/lib/db/users";
+import type { FamilyMember, UserProfile } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -15,31 +18,18 @@ import { createNotification } from "@/lib/db/notifications";
 import { toast } from "sonner";
 import { 
   Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Check, 
-  Shield, 
   Users,
-  ShieldCheck, 
-  Eye, 
-  Clock,
   Link as LinkIcon,
   ShieldAlert
 } from "lucide-react";
 
-const initialForm = {
-  name: "",
-  relation: "son" as "son" | "daughter" | "mother" | "other",
-  isActive: true,
-};
 export default function FamilyMembersPage() {
   const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     relation: "son" as "son" | "daughter" | "mother" | "other",
@@ -47,14 +37,28 @@ export default function FamilyMembersPage() {
   });
   const [editId, setEditId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assignmentMode, setAssignmentMode] = useState<"existing" | "new">("existing");
+  const [assignmentForm, setAssignmentForm] = useState({
+    userId: "",
+    familyMemberId: "",
+    name: "",
+    relation: "son" as "son" | "daughter" | "mother" | "other",
+    isActive: true,
+  });
   const { profile } = useAuth();
-  const { isMember } = useRole();
+  const { isAdmin } = useRole();
 
   const fetchMembers = async () => {
     setLoading(true);
     setError(null);
     try {
-      setMembers(await getAllFamilyMembers());
+      const [memberData, userData] = await Promise.all([
+        getAllFamilyMembers(),
+        getAllUserProfiles(),
+      ]);
+      setMembers(memberData);
+      setUsers(userData);
     } catch {
       setError("Failed to load family members.");
     } finally {
@@ -70,6 +74,19 @@ export default function FamilyMembersPage() {
     setForm({ name: "", relation: "son", isActive: true });
     setEditId(null);
     setIsModalOpen(false);
+  };
+
+  const resetAssignmentForm = () => {
+    setAssignmentForm({
+      userId: "",
+      familyMemberId: "",
+      name: "",
+      relation: "son",
+      isActive: true,
+    });
+    setAssignmentMode("existing");
+    setAssignmentError(null);
+    setIsAssignModalOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,6 +164,85 @@ export default function FamilyMembersPage() {
     }
   };
 
+  const getMemberLinkedUserId = (member: FamilyMember) => member.linkedUserId ?? member.linkedUid;
+
+  const unassignedUsers = users.filter((userProfile) => {
+    const isAlreadyLinkedInUserProfile = Boolean(userProfile.familyMemberId);
+    const isAlreadyLinkedInMember = members.some((member) => getMemberLinkedUserId(member) === userProfile.uid);
+    return (
+      (userProfile.role === "viewer" || userProfile.role === "member") &&
+      !isAlreadyLinkedInUserProfile &&
+      !isAlreadyLinkedInMember
+    );
+  });
+
+  const unassignedMembers = members.filter((member) => !getMemberLinkedUserId(member));
+
+  const handleAssignSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!profile) {
+      setAssignmentError("Your profile is still loading.");
+      return;
+    }
+
+    if (!isAdmin) {
+      setAssignmentError("Only admins can assign users.");
+      return;
+    }
+
+    if (!assignmentForm.userId) {
+      setAssignmentError("User is required.");
+      return;
+    }
+
+    if (assignmentMode === "existing" && !assignmentForm.familyMemberId) {
+      setAssignmentError("Family member is required.");
+      return;
+    }
+
+    if (assignmentMode === "new" && !assignmentForm.name.trim()) {
+      setAssignmentError("Family member name is required.");
+      return;
+    }
+
+    setActionLoading(true);
+    setAssignmentError(null);
+
+    try {
+      if (assignmentMode === "existing") {
+        await assignUserToFamilyMember({
+          userId: assignmentForm.userId,
+          familyMemberId: assignmentForm.familyMemberId,
+          assignedBy: profile.uid,
+        });
+      } else {
+        await createFamilyMemberAndAssignUser({
+          userId: assignmentForm.userId,
+          assignedBy: profile.uid,
+          member: {
+            name: assignmentForm.name.trim(),
+            relation: assignmentForm.relation,
+            gender: assignmentForm.relation === "son" ? "male" : "female",
+            isActive: assignmentForm.isActive,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      toast.success("User assigned to family member");
+      await fetchMembers();
+      resetAssignmentForm();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to assign user.";
+      setAssignmentError(message);
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const statusClass = (active: boolean) =>
     active ? "text-emerald-700 bg-emerald-100" : "text-rose-700 bg-rose-100";
 
@@ -157,14 +253,23 @@ export default function FamilyMembersPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Family Members</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage family members.</p>
         </div>
-        {isMember ? (
-          <button 
-            onClick={() => { resetForm(); setIsModalOpen(true); }}
-            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
-          >
-            <Plus size={20} />
-            <span>Add Member</span>
-          </button>
+        {isAdmin ? (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button 
+              onClick={() => { resetAssignmentForm(); setIsAssignModalOpen(true); }}
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-white hover:bg-black font-bold transition-all shadow-lg shadow-slate-200"
+            >
+              <LinkIcon size={20} />
+              <span>Assign User</span>
+            </button>
+            <button 
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
+              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200"
+            >
+              <Plus size={20} />
+              <span>Add Member</span>
+            </button>
+          </div>
         ) : (
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 text-xs font-bold">
              <ShieldAlert size={16} />
@@ -238,6 +343,136 @@ export default function FamilyMembersPage() {
         </form>
       </Modal>
 
+      <Modal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        title="Assign User"
+      >
+        <form onSubmit={handleAssignSubmit} className="grid gap-6">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 dark:bg-slate-900/60 p-1">
+            <button
+              type="button"
+              onClick={() => setAssignmentMode("existing")}
+              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+                assignmentMode === "existing"
+                  ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+              }`}
+            >
+              Existing
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssignmentMode("new")}
+              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+                assignmentMode === "new"
+                  ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+              }`}
+            >
+              New Profile
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">User</label>
+            <select
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800/60 px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              value={assignmentForm.userId}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, userId: e.target.value })}
+              required
+            >
+              <option value="">Select an unassigned user</option>
+              {unassignedUsers.map((userProfile) => (
+                <option key={userProfile.uid} value={userProfile.uid}>
+                  {userProfile.displayName} ({userProfile.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {assignmentMode === "existing" ? (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Family Member</label>
+              <select
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800/60 px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                value={assignmentForm.familyMemberId}
+                onChange={(e) => setAssignmentForm({ ...assignmentForm, familyMemberId: e.target.value })}
+                required
+              >
+                <option value="">Select an unassigned family member</option>
+                {unassignedMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name} ({member.relation})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">New Family Member Name</label>
+                <input
+                  className="w-full rounded-lg border px-3 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  value={assignmentForm.name}
+                  onChange={(e) => setAssignmentForm({ ...assignmentForm, name: e.target.value })}
+                  required
+                  placeholder="e.g. John Doe"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Family Relation</label>
+                <select
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800/60 px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  value={assignmentForm.relation}
+                  onChange={(e) => setAssignmentForm({ ...assignmentForm, relation: e.target.value as "son" | "daughter" | "mother" | "other" })}
+                  required
+                >
+                  <option value="son">Son (Inherit 2.0x)</option>
+                  <option value="daughter">Daughter (Inherit 1.0x)</option>
+                  <option value="mother">Mother (Inherit 1.0x)</option>
+                  <option value="other">Other / Staff</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/40">
+                <input
+                  type="checkbox"
+                  id="isAssignedMemberActive"
+                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  checked={assignmentForm.isActive}
+                  onChange={(e) => setAssignmentForm({ ...assignmentForm, isActive: e.target.checked })}
+                />
+                <label htmlFor="isAssignedMemberActive" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">Member is currently Active</label>
+              </div>
+            </>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={actionLoading || unassignedUsers.length === 0}
+              className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700 font-bold disabled:opacity-50 transition-all shadow-md active:scale-95"
+            >
+              {actionLoading ? "Assigning..." : "Assign User"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAssignModalOpen(false)}
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {unassignedUsers.length === 0 && (
+            <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">No unassigned users are available.</p>
+          )}
+          {assignmentError && <p className="text-sm text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-100">{assignmentError}</p>}
+        </form>
+      </Modal>
+
       <section className="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800/60">
         <h3 className="text-xl font-semibold mb-4">Family Members</h3>
 
@@ -279,7 +514,7 @@ export default function FamilyMembersPage() {
                                }`}>
                                  {member.relation || 'Member'}
                                </span>
-                               {member.linkedUid && (
+                               {getMemberLinkedUserId(member) && (
                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest">
                                    Registered
                                  </span>
@@ -298,8 +533,20 @@ export default function FamilyMembersPage() {
                           {member.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      {isMember && (
+                      {isAdmin && (
                         <td className="px-3 py-2 text-right space-x-2">
+                          {!getMemberLinkedUserId(member) && (
+                            <button
+                              onClick={() => {
+                                resetAssignmentForm();
+                                setAssignmentForm((current) => ({ ...current, familyMemberId: member.id }));
+                                setIsAssignModalOpen(true);
+                              }}
+                              className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700 hover:bg-slate-100 transition-colors text-xs font-bold"
+                            >
+                              Assign User
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(member)}
                             className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold"

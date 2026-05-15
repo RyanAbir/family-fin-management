@@ -18,7 +18,10 @@ export interface FamilyMember {
   relation: "son" | "daughter" | "mother" | "other";
   gender?: "male" | "female";
   linkedUid?: string;
+  linkedUserId?: string;
   linkedEmail?: string;
+  assignedAt?: Date;
+  assignedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -91,6 +94,8 @@ export interface UserProfile {
   gender?: "male" | "female";
   relation?: "son" | "daughter" | "mother" | "other";
   familyMemberId?: string;
+  assignedAt?: Date;
+  assignedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }

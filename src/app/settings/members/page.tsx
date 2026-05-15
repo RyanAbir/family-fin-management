@@ -3,20 +3,10 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { useEffect, useState } from "react";
-import { 
-  collection, 
-  getDocs, 
-  query, 
-  orderBy 
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { createInvitation } from "@/lib/db/invites";
-import { UserProfile } from "@/types";
+import { getAllUserProfiles } from "@/lib/db/users";
+import type { UserProfile } from "@/types";
 import { 
   Users, 
-  UserPlus, 
-  Copy, 
-  Check, 
   Shield, 
   ShieldCheck, 
   ShieldAlert,
@@ -32,22 +22,16 @@ import { UserRole } from "@/types";
 
 export default function MembersSettingsPage() {
   const { user, profile, loading: authLoading } = useAuth();
-  const { isAdmin, isMember, loading: roleLoading } = useRole();
+  const { isAdmin, loading: roleLoading } = useRole();
   const loading = authLoading || roleLoading;
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const fetchMembers = async () => {
     setFetching(true);
     try {
-      const q = query(collection(db, "userProfiles"), orderBy("role"), orderBy("displayName"));
-      const querySnapshot = await getDocs(q);
-      const memberList = querySnapshot.docs
-        .map(doc => doc.data() as UserProfile)
-        .filter(m => m.role !== "super_admin" || m.uid === profile?.uid); // 👻 Hide Super Admins, but show yourself to yourself
+      const memberList = (await getAllUserProfiles())
+        .filter((member) => member.role !== "super_admin" || member.uid === profile?.uid);
       setMembers(memberList);
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -63,38 +47,13 @@ export default function MembersSettingsPage() {
     }
   }, [user]);
 
-  const handleGenerateInvite = async () => {
-    if (!isMember) {
-      toast.error("Only members can invite others.");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      if (!profile) throw new Error("Profile not loaded");
-      const { token } = await createInvitation(profile.uid, profile.displayName, "member");
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/invite/join?token=${token}`;
-      setInviteLink(link);
-      toast.success("Invitation link generated!");
-    } catch (error) {
-      toast.error("Failed to generate invitation.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (inviteLink) {
-      navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      toast.success("Link copied to clipboard!");
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleRoleChange = async (uid: string, newRole: UserRole) => {
     if (!isAdmin) return;
+    if (newRole === "member") {
+      toast.error("Assign users to family members from the Family Members page.");
+      await fetchMembers();
+      return;
+    }
     
     if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       fetchMembers(); // Reset selection
@@ -106,6 +65,7 @@ export default function MembersSettingsPage() {
       toast.success(`User role updated to ${newRole}`);
       await fetchMembers();
     } catch (error) {
+      console.error("Error updating role:", error);
       toast.error("Failed to update user role.");
       fetchMembers(); // Reset selection
     }
@@ -140,44 +100,9 @@ export default function MembersSettingsPage() {
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-6 border-slate-200 dark:border-slate-800/60">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Family Members</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage access and invite new members to the dashboard.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage access for registered users.</p>
         </div>
-        {isMember && (
-          <button 
-            onClick={handleGenerateInvite}
-            disabled={isGenerating}
-            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-200 active:scale-95 disabled:opacity-50"
-          >
-            <UserPlus size={20} />
-            <span>Generate Invite Link</span>
-          </button>
-        )}
       </header>
-
-      {inviteLink && (
-        <section className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 lg:p-8 animate-in zoom-in-95 duration-300">
-          <div className="flex items-start gap-4">
-             <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-md">
-                <LinkIcon size={24} />
-             </div>
-             <div className="flex-1">
-                <h3 className="text-lg font-bold text-indigo-900 mb-1">New Invitation Created</h3>
-                <p className="text-sm text-indigo-700 mb-4 font-medium italic">This link allows one person to join as a Member. Valid for 24 hours.</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                   <div className="flex-1 bg-white dark:bg-slate-900 border border-indigo-200 rounded-xl px-4 py-3 text-sm font-mono text-indigo-600 truncate">
-                      {inviteLink}
-                   </div>
-                   <button 
-                    onClick={copyToClipboard}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700 font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap"
-                   >
-                    {copied ? <><Check size={18} /> Copied</> : <><Copy size={18} /> Copy Link</>}
-                   </button>
-                </div>
-             </div>
-          </div>
-        </section>
-      )}
 
       <div className="grid gap-6">
         <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
@@ -221,7 +146,7 @@ export default function MembersSettingsPage() {
                               className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-0.5 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                             >
                               <option value="viewer">Viewer</option>
-                              <option value="member">Member</option>
+                              <option value="member" disabled>Member (assigned)</option>
                               <option value="admin">Admin</option>
                               <option value="banned" className="text-rose-600 font-bold">Banned</option>
                             </select>
@@ -306,7 +231,7 @@ export default function MembersSettingsPage() {
                               className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 text-[10px] font-bold uppercase tracking-wider rounded-lg px-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                             >
                               <option value="viewer">Viewer</option>
-                              <option value="member">Member</option>
+                              <option value="member" disabled>Member (assigned)</option>
                               <option value="admin">Admin</option>
                               <option value="banned" className="text-rose-600 font-bold">Banned</option>
                             </select>
@@ -356,11 +281,11 @@ export default function MembersSettingsPage() {
           </div>
         </section>
 
-        {!isMember && (
+        {!isAdmin && (
           <section className="bg-amber-50 border border-amber-100 rounded-3xl p-6 text-center mt-8">
              <h4 className="text-sm font-bold text-amber-900 mb-2">Restricted Access</h4>
              <p className="text-xs text-amber-700 max-w-md mx-auto">
-                You currently have **Viewer** permissions. You can see everything but cannot make changes or invite others. Contact a family member with an invite link to upgrade your account.
+                You can view registered users, but only admins can manage access. Contact an administrator if your account needs to be linked to a family member.
              </p>
           </section>
         )}
