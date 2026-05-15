@@ -373,57 +373,60 @@ export default function Dashboard() {
         </section>
 
         {/* Share Distribution */}
-        <section className="rounded-[2.5rem] border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900 p-8 shadow-sm hover:shadow-xl transition-shadow flex flex-col">
-          <div className="mb-6">
+        <section className="rounded-[2.5rem] border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900 p-8 shadow-sm hover:shadow-xl transition-shadow h-fit">
+          <div>
              <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 font-heading tracking-tight flex items-center gap-2">
                 <PieIcon className="text-indigo-500" size={24} />
                 {t("equitySplit")}
              </h3>
              <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">{t("splitSub")}</p>
           </div>
-          <div className="h-56 w-full flex-1 min-h-[220px]">
-            {familyDistribution && familyDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={familyDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={8}
-                    dataKey="value"
-                    animationBegin={200}
-                  >
-                    {familyDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(value: any) => [formatCurrency(Number(value)), t('share') || "Share"]}
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2)', backgroundColor: '#1e293b', color: '#f8fafc' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                <PieIcon className="mb-2 opacity-20" size={32} />
-                <p className="text-xs font-bold uppercase tracking-widest">No Data Available</p>
+
+          {familyDistribution && familyDistribution.length > 0 ? (
+            <>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                 {familyDistribution.map((entry, index) => (
+                   <div key={entry.name} className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{entry.name}</span>
+                      </div>
+                      <span className="text-sm font-black text-slate-900 dark:text-slate-100">{formatCurrency(entry.value)}</span>
+                   </div>
+                 ))}
               </div>
-            )}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-             {familyDistribution.map((entry, index) => (
-               <div key={entry.name} className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{entry.name}</span>
-                  </div>
-                  <span className="text-sm font-black text-slate-900 dark:text-slate-100">{formatCurrency(entry.value)}</span>
-               </div>
-             ))}
-          </div>
+              <div className="h-48 w-full mt-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={familyDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={8}
+                      dataKey="value"
+                      animationBegin={200}
+                    >
+                      {familyDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={2} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      formatter={(value: any) => [formatCurrency(Number(value)), t('share') || "Share"]}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2)', backgroundColor: '#1e293b', color: '#f8fafc' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <div className="mt-6 py-8 w-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+              <PieIcon className="mb-2 opacity-20" size={32} />
+              <p className="text-xs font-bold uppercase tracking-widest">No Data Available</p>
+            </div>
+          )}
         </section>
       </div>
 
