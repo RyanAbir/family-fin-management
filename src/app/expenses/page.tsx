@@ -303,7 +303,7 @@ export default function ExpensesPage() {
           </div>
           <button
             onClick={clearFilters}
-            className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900 dark:text-slate-100 hover:bg-slate-400"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-6 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium transition-colors"
           >
             Clear Filters
           </button>
@@ -427,7 +427,7 @@ export default function ExpensesPage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 px-6 py-4 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 font-bold transition-all"
+              className="flex-1 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 px-6 py-4 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:border-rose-100 dark:hover:border-rose-800 font-bold transition-all"
             >
               Cancel
             </button>

@@ -295,7 +295,7 @@ export default function IncomePage() {
           </div>
           <button
             onClick={clearFilters}
-            className="rounded-lg bg-slate-300 px-4 py-2 text-slate-900 dark:text-slate-100 hover:bg-slate-400"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-6 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium transition-colors"
           >
             Clear Filters
           </button>

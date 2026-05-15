@@ -341,7 +341,7 @@ export default function FamilyMembersPage() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold transition-all"
             >
               Cancel
             </button>
@@ -468,7 +468,7 @@ export default function FamilyMembersPage() {
             <button
               type="button"
               onClick={() => setIsAssignModalOpen(false)}
-              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-bold transition-all"
+              className="flex-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold transition-all"
             >
               Cancel
             </button>
