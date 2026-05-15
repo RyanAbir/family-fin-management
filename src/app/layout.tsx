@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
-import { Navigation } from "@/components/layout/Navigation";
+import { Navigation, DesktopTopControls } from "@/components/layout/Navigation";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "sonner";
 
@@ -42,9 +42,14 @@ export default function RootLayout({
               <Toaster position="top-right" richColors closeButton />
               <div className="flex min-h-screen flex-col lg:flex-row">
                 <Navigation />
-                <main className="flex-1 lg:ml-0 lg:pl-72 p-4 md:p-6 lg:p-8 pt-6 lg:pt-8 transition-all duration-300">
-                  {children}
-                </main>
+                <div className="flex-1 flex flex-col lg:ml-0 lg:pl-72 transition-all duration-300">
+                  <header className="hidden lg:flex items-center justify-end px-8 pt-6 w-full">
+                     <DesktopTopControls />
+                  </header>
+                  <main className="flex-1 p-4 md:p-6 lg:px-8 lg:pb-8 lg:pt-6 transition-all duration-300">
+                    {children}
+                  </main>
+                </div>
               </div>
             </AuthProvider>
           </LanguageProvider>
