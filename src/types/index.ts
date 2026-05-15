@@ -94,6 +94,8 @@ export interface UserProfile {
   gender?: "male" | "female";
   relation?: "son" | "daughter" | "mother" | "other";
   familyMemberId?: string;
+  linkedFamilyMemberId?: string;
+  assignedFamilyMemberId?: string;
   assignedAt?: Date;
   assignedBy?: string;
   createdAt: Date;

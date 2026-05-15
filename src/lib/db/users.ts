@@ -1,6 +1,8 @@
 import { 
   collection,
+  deleteField,
   getDocs,
+  getDoc,
   orderBy,
   query,
   doc, 
@@ -9,6 +11,9 @@ import {
   serverTimestamp,
   Timestamp,
   DocumentData,
+  DocumentReference,
+  FieldValue,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { UserProfile, UserRole } from "@/types";
@@ -42,6 +47,8 @@ const userProfileFromData = (data: DocumentData, fallbackUid: string): UserProfi
       ? data.relation
       : undefined,
   familyMemberId: typeof data.familyMemberId === "string" ? data.familyMemberId : undefined,
+  linkedFamilyMemberId: typeof data.linkedFamilyMemberId === "string" ? data.linkedFamilyMemberId : undefined,
+  assignedFamilyMemberId: typeof data.assignedFamilyMemberId === "string" ? data.assignedFamilyMemberId : undefined,
   assignedAt: data.assignedAt ? toDate(data.assignedAt) : undefined,
   assignedBy: typeof data.assignedBy === "string" ? data.assignedBy : undefined,
   createdAt: toDate(data.createdAt),
@@ -54,14 +61,72 @@ export const getAllUserProfiles = async (): Promise<UserProfile[]> => {
   return querySnapshot.docs.map((snapshot) => userProfileFromData(snapshot.data(), snapshot.id));
 };
 
+const addMemberRef = (refs: Map<string, DocumentReference<DocumentData>>, memberId: unknown) => {
+  if (typeof memberId === "string" && memberId.length > 0) {
+    refs.set(memberId, doc(db, "family_members", memberId));
+  }
+};
+
+const unlinkUserFromFamilyMember = async (uid: string, userData: DocumentData): Promise<void> => {
+  const memberRefs = new Map<string, DocumentReference<DocumentData>>();
+
+  addMemberRef(memberRefs, userData.familyMemberId);
+  addMemberRef(memberRefs, userData.linkedFamilyMemberId);
+  addMemberRef(memberRefs, userData.assignedFamilyMemberId);
+
+  const [linkedUserIdSnapshot, linkedUidSnapshot] = await Promise.all([
+    getDocs(query(collection(db, "family_members"), where("linkedUserId", "==", uid))),
+    getDocs(query(collection(db, "family_members"), where("linkedUid", "==", uid))),
+  ]);
+
+  linkedUserIdSnapshot.docs.forEach((snapshot) => memberRefs.set(snapshot.id, snapshot.ref));
+  linkedUidSnapshot.docs.forEach((snapshot) => memberRefs.set(snapshot.id, snapshot.ref));
+
+  const memberUnlinkData: Record<string, FieldValue> = {
+    linkedUserId: deleteField(),
+    linkedUid: deleteField(),
+    linkedEmail: deleteField(),
+    assignedAt: deleteField(),
+    assignedBy: deleteField(),
+  };
+
+  await Promise.all(
+    Array.from(memberRefs.values()).map((memberRef) => updateDoc(memberRef, memberUnlinkData))
+  );
+};
+
 /**
  * Updates a user's role in the database.
  * Only should be called by an Admin.
  */
 export const updateUserRole = async (uid: string, newRole: UserRole) => {
   const userRef = doc(db, "userProfiles", uid);
+  const userSnapshot = await getDoc(userRef);
+
+  if (!userSnapshot.exists()) {
+    throw new Error("User profile not found.");
+  }
+
+  const userData = userSnapshot.data();
+  const currentRole = typeof userData.role === "string" ? userData.role : "viewer";
+  const isMemberResetToViewer = currentRole === "member" && newRole === "viewer";
+
+  if (isMemberResetToViewer) {
+    await unlinkUserFromFamilyMember(uid, userData);
+  }
+
   await updateDoc(userRef, {
     role: newRole,
+    ...(isMemberResetToViewer
+      ? {
+          familyMemberId: deleteField(),
+          linkedFamilyMemberId: deleteField(),
+          assignedFamilyMemberId: deleteField(),
+          relation: deleteField(),
+          assignedAt: deleteField(),
+          assignedBy: deleteField(),
+        }
+      : {}),
     updatedAt: serverTimestamp(),
   });
 };

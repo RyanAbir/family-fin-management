@@ -160,7 +160,12 @@ const ensureAssignable = async (userId: string, familyMemberId: string): Promise
 
   await ensureUserUnassigned(userId);
 
-  if (!usersSnapshot.empty) {
+  const hasActiveAssignedUser = usersSnapshot.docs.some((snapshot) => {
+    const data = snapshot.data();
+    return snapshot.id !== userId && data.role === "member";
+  });
+
+  if (hasActiveAssignedUser) {
     throw new Error("This family member is already assigned to a user.");
   }
 };
@@ -193,7 +198,11 @@ export const assignUserToFamilyMember = async ({
     const memberData = memberSnap.data();
     const member = familyMemberConverter.fromFirestore(memberSnap);
 
-    if (typeof userData.familyMemberId === "string" && userData.familyMemberId.length > 0) {
+    if (
+      typeof userData.familyMemberId === "string" &&
+      userData.familyMemberId.length > 0 &&
+      userData.role !== "viewer"
+    ) {
       throw new Error("This user is already assigned to a family member.");
     }
 
