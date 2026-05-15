@@ -63,19 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             setProfile(profileData);
 
-            // Redirection logic for onboarding
-            const isOnboarding = pathname.startsWith("/onboarding");
+            // Redirection logic
             const isBanned = profileData.role === "banned";
-            const isSuperAdmin = profileData.role === "super_admin";
-            const needsOnboarding = !profileData.familyMemberId && !isSuperAdmin;
 
             if (isBanned && !pathname.startsWith("/banned") && pathname !== "/login") {
               router.push("/banned");
               return;
-            }
-
-            if (needsOnboarding && !isOnboarding && !isBanned && !pathname.startsWith("/login") && !pathname.startsWith("/invite") && !pathname.startsWith("/banned")) {
-              router.push("/onboarding");
             }
           } else {
             // Document doesn't exist yet, creating default...
