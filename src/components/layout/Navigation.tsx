@@ -220,7 +220,7 @@ export function Navigation() {
 
 export function DesktopTopControls() {
   return (
-    <div className="hidden lg:flex items-center gap-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg px-2.5 py-1.5 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-800/50">
+    <div className="relative z-[9999] hidden lg:flex items-center gap-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-lg px-2.5 py-1.5 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-800/50">
        <LanguageToggle />
        <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
        <ThemeToggle />

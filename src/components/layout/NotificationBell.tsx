@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Bell, Check, ExternalLink, Inbox } from "lucide-react";
 import { subscribeToNotifications, markNotificationAsRead } from "@/lib/db/notifications";
 import { AppNotification } from "@/types";
@@ -17,7 +17,7 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const handleNotificationClick = async (notif: AppNotification) => {
+  const handleNotificationClick = useCallback(async (notif: AppNotification) => {
     if (user) {
       await markNotificationAsRead(notif.id, user.uid);
     }
@@ -25,7 +25,7 @@ export function NotificationBell() {
     if (notif.targetTab) {
       router.push(notif.targetTab);
     }
-  };
+  }, [router, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -54,8 +54,7 @@ export function NotificationBell() {
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, unreadCount]);
+  }, [handleNotificationClick, user, unreadCount]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,7 +73,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-[9999]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-all active:scale-95"
@@ -89,7 +88,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-[90vw] max-w-[calc(100vw-1rem)] sm:w-80 sm:max-w-sm lg:w-96 rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 z-[999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="absolute right-0 z-[9999] mt-3 w-[90vw] max-w-[calc(100vw-1rem)] sm:w-80 sm:max-w-sm lg:w-96 rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
             {unreadCount > 0 && (

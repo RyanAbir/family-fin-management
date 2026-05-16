@@ -43,7 +43,7 @@ export default function RootLayout({
               <div className="flex min-h-screen flex-col lg:flex-row">
                 <Navigation />
                 <div className="flex-1 flex flex-col lg:ml-0 lg:pl-72 transition-all duration-300">
-                  <header className="hidden lg:flex items-center justify-end px-8 pt-6 w-full">
+                  <header className="relative z-[9999] hidden lg:flex items-center justify-end px-8 pt-6 w-full">
                      <DesktopTopControls />
                   </header>
                   <main className="flex-1 p-4 md:p-6 lg:px-8 lg:pb-8 lg:pt-6 transition-all duration-300">
