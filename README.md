@@ -18,11 +18,11 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Environment
 
-AI Financial Insights use the OpenAI API from a server-side route only. Add this server-only variable to `.env.local`:
+AI Financial Insights use the Google Gemini API from a server-side route only. Add this server-only variable to `.env.local`:
 
 ```bash
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_INSIGHTS_MODEL=gpt-4.1-mini
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_INSIGHTS_MODEL=gemini-2.5-flash
 ```
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.

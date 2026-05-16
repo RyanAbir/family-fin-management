@@ -7,7 +7,7 @@ import type {
 
 export const runtime = "nodejs";
 
-const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const CACHE_TTL_MS = 1000 * 60 * 15;
 
 interface CacheEntry {
@@ -15,19 +15,18 @@ interface CacheEntry {
   response: FinancialInsightsResponse;
 }
 
-interface OpenAITextContent {
-  type?: string;
+interface GeminiPart {
   text?: string;
 }
 
-interface OpenAIOutputItem {
-  type?: string;
-  content?: OpenAITextContent[];
+interface GeminiCandidate {
+  content?: {
+    parts?: GeminiPart[];
+  };
 }
 
-interface OpenAIResponseBody {
-  output_text?: string;
-  output?: OpenAIOutputItem[];
+interface GeminiResponseBody {
+  candidates?: GeminiCandidate[];
   error?: {
     message?: string;
   };
@@ -114,12 +113,10 @@ const sanitizeDataset = (value: unknown): FinancialInsightDataset | null => {
 const cacheKeyFor = (dataset: FinancialInsightDataset): string =>
   createHash("sha256").update(JSON.stringify(dataset)).digest("hex");
 
-const parseOutputText = (body: OpenAIResponseBody): string => {
-  if (typeof body.output_text === "string") return body.output_text;
-
-  const textParts = body.output
-    ?.flatMap((item) => item.content ?? [])
-    .map((content) => content.text)
+const parseOutputText = (body: GeminiResponseBody): string => {
+  const textParts = body.candidates
+    ?.flatMap((candidate) => candidate.content?.parts ?? [])
+    .map((part) => part.text)
     .filter((text): text is string => typeof text === "string");
 
   return textParts?.join("\n").trim() ?? "";
@@ -186,11 +183,11 @@ const fallbackInsights = (dataset: FinancialInsightDataset): FinancialInsight[] 
 };
 
 export async function POST(request: Request) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return Response.json(
-      { error: "AI insights are not configured. Add OPENAI_API_KEY on the server." },
+      { error: "AI insights are not configured. Add GEMINI_API_KEY on the server." },
       { status: 503 }
     );
   }
@@ -212,29 +209,37 @@ export async function POST(request: Request) {
   const prompt = [
     "Analyze this family finance dashboard dataset and return JSON only.",
     "Return exactly this shape: {\"insights\":[{\"title\":\"...\",\"summary\":\"...\",\"category\":\"income|expense|trend|property|equity|savings\",\"severity\":\"info|positive|warning\"}]}",
-    "Create 4 to 6 concise, specific insights. Mention unusual expense increases, highest earning property, spending patterns, savings suggestions, monthly observations, and equity distribution when supported by the data.",
+    "Create 4 to 6 concise, specific insights. Include financial observations, expense insights, savings suggestions, property performance notes, monthly observations, and equity distribution when supported by the data.",
     "Do not invent facts beyond the dataset. Use plain language and practical recommendations.",
     JSON.stringify(dataset),
   ].join("\n\n");
 
   try {
-    const openAiResponse = await fetch(OPENAI_RESPONSES_URL, {
+    const model = process.env.GEMINI_INSIGHTS_MODEL ?? "gemini-2.5-flash";
+    const geminiResponse = await fetch(`${GEMINI_API_BASE_URL}/${model}:generateContent`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_INSIGHTS_MODEL ?? "gpt-4.1-mini",
-        input: prompt,
-        max_output_tokens: 900,
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 900,
+          responseMimeType: "application/json",
+        },
       }),
     });
 
-    const body = (await openAiResponse.json().catch(() => ({}))) as OpenAIResponseBody;
+    const body = (await geminiResponse.json().catch(() => ({}))) as GeminiResponseBody;
 
-    if (!openAiResponse.ok) {
-      const message = body.error?.message ?? "OpenAI request failed.";
+    if (!geminiResponse.ok) {
+      const message = body.error?.message ?? "Gemini request failed.";
       return Response.json({ error: message }, { status: 502 });
     }
 
