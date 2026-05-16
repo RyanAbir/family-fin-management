@@ -167,21 +167,13 @@ export default function FamilyMembersPage() {
   const getMemberLinkedUserId = (member: FamilyMember) => member.linkedUserId ?? member.linkedUid;
 
   const unassignedUsers = users.filter((userProfile) => {
-    const isAlreadyLinkedInUserProfile = Boolean(
-      userProfile.familyMemberId || 
-      userProfile.linkedFamilyMemberId || 
-      userProfile.assignedFamilyMemberId
-    );
-    const isAlreadyLinkedInMember = members.some((member) => getMemberLinkedUserId(member) === userProfile.uid);
-    const isValidRole = userProfile.role === "viewer" || userProfile.role === "member";
-    const isIncluded = isValidRole && !isAlreadyLinkedInUserProfile && !isAlreadyLinkedInMember;
-    
-    // Debug log for specific user
-    if (userProfile.email === "ryanabir.info@gmail.com" || userProfile.email === "info.ryanabir@gmail.com") {
-      console.log(`[AssignUserDebug] ${userProfile.email}: role=${userProfile.role}, isAlreadyLinkedInUserProfile=${isAlreadyLinkedInUserProfile}, isAlreadyLinkedInMember=${isAlreadyLinkedInMember} -> INCLUDED=${isIncluded}`);
-    }
+    const hasActiveFamilyMemberLink = members.some((member) => {
+      const linkedUserId = getMemberLinkedUserId(member);
+      if (linkedUserId !== userProfile.uid) return false;
+      return userProfile.role === "member";
+    });
 
-    return isIncluded;
+    return userProfile.role === "viewer" && !hasActiveFamilyMemberLink;
   });
 
   const unassignedMembers = members.filter((member) => !getMemberLinkedUserId(member));

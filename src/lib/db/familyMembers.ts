@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   query,
   where,
   runTransaction,
@@ -143,14 +144,37 @@ interface CreateAndAssignInput {
 const getLinkedUserId = (member: FamilyMember): string | undefined => member.linkedUserId ?? member.linkedUid;
 
 const ensureUserUnassigned = async (userId: string): Promise<void> => {
-  const [membersSnapshot, legacyMembersSnapshot] = await Promise.all([
+  const [userSnapshot, membersSnapshot, legacyMembersSnapshot] = await Promise.all([
+    getDoc(doc(db, "userProfiles", userId)),
     getDocs(query(familyMembersRef, where("linkedUserId", "==", userId))),
     getDocs(query(familyMembersRef, where("linkedUid", "==", userId))),
   ]);
 
-  if (!membersSnapshot.empty || !legacyMembersSnapshot.empty) {
-    throw new Error("This user is already assigned to a family member.");
+  const matchedMemberRefs = new Map(
+    [...membersSnapshot.docs, ...legacyMembersSnapshot.docs].map((snapshot) => [snapshot.id, snapshot.ref])
+  );
+
+  if (matchedMemberRefs.size === 0) return;
+
+  const userRole = userSnapshot.exists() ? userSnapshot.data().role : undefined;
+
+  if (userRole === "viewer") {
+    await Promise.all(
+      Array.from(matchedMemberRefs.values()).map((memberRef) =>
+        updateDoc(memberRef, {
+          linkedUserId: deleteField(),
+          linkedUid: deleteField(),
+          linkedEmail: deleteField(),
+          assignedAt: deleteField(),
+          assignedBy: deleteField(),
+          updatedAt: serverTimestamp(),
+        })
+      )
+    );
+    return;
   }
+
+  throw new Error("This user is already assigned to a family member.");
 };
 
 const ensureAssignable = async (userId: string, familyMemberId: string): Promise<void> => {
