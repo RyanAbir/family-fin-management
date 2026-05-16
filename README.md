@@ -16,6 +16,15 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Environment
+
+AI Financial Insights use the OpenAI API from a server-side route only. Add this server-only variable to `.env.local`:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_INSIGHTS_MODEL=gpt-4.1-mini
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

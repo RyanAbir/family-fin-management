@@ -126,3 +126,55 @@ export interface Invitation {
   usedBy?: string; // UID
   createdAt: Date;
 }
+
+export interface FinancialInsight {
+  title: string;
+  summary: string;
+  category: "income" | "expense" | "trend" | "property" | "equity" | "savings";
+  severity: "info" | "positive" | "warning";
+}
+
+export interface FinancialInsightDataset {
+  generatedForMonth: string;
+  totals: {
+    income: number;
+    expenses: number;
+    net: number;
+  };
+  monthlyTrends: {
+    month: string;
+    income: number;
+    expense: number;
+    net: number;
+  }[];
+  propertyPerformance: {
+    propertyName: string;
+    income: number;
+    expense: number;
+    net: number;
+  }[];
+  equityDistribution: {
+    memberName: string;
+    amount: number;
+  }[];
+  expenseByCategory: {
+    category: string;
+    amount: number;
+  }[];
+  incomeByCategory: {
+    category: string;
+    amount: number;
+  }[];
+  recentTransactions: {
+    type: "Income" | "Expense";
+    category: string;
+    amount: number;
+    date: string;
+  }[];
+}
+
+export interface FinancialInsightsResponse {
+  insights: FinancialInsight[];
+  generatedAt: string;
+  cached: boolean;
+}

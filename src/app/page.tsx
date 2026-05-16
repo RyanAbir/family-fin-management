@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { FamilyMember, Property, OwnershipShare } from "@/types";
+import type {
+  FamilyMember,
+  FinancialInsight,
+  FinancialInsightDataset,
+  FinancialInsightsResponse,
+  Property,
+  OwnershipShare
+} from "@/types";
 import { getAllIncomeEntries } from "@/lib/db/incomeEntries";
 import { getAllExpenseEntries } from "@/lib/db/expenseEntries";
 import { getAllOwnershipShares } from "@/lib/db/ownershipShares";
@@ -24,7 +31,10 @@ import {
   ArrowRight,
   ArrowDownRight,
   Target,
-  Zap
+  Zap,
+  Sparkles,
+  X,
+  RefreshCw
 } from "lucide-react";
 import {
   BarChart,
@@ -40,8 +50,6 @@ import {
   Cell,
   AreaChart,
   Area,
-  Line,
-  LineChart
 } from "recharts";
 import { formatCurrency, round2 } from "@/lib/finance/helpers";
 import { DashboardSkeleton } from "@/components/ui/SkeletonLoaders";
@@ -137,12 +145,99 @@ function MetricCard({
 
 const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#06B6D4'];
 
+const insightAccentClass = (severity: FinancialInsight["severity"]) => {
+  if (severity === "positive") return "border-emerald-100 bg-emerald-50/70 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300";
+  if (severity === "warning") return "border-amber-100 bg-amber-50/70 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300";
+  return "border-indigo-100 bg-indigo-50/70 text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300";
+};
+
 interface DashboardTransaction {
   id: string;
   type: "Income" | "Expense";
   category: string;
   amount: number;
   date: Date;
+}
+
+interface InsightModalProps {
+  isOpen: boolean;
+  insights: FinancialInsight[];
+  error: string | null;
+  loading: boolean;
+  cached: boolean;
+  onClose: () => void;
+  onRefresh: () => void;
+}
+
+function InsightModal({ isOpen, insights, error, loading, cached, onClose, onRefresh }: InsightModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-slate-950/70 backdrop-blur-sm p-0 sm:p-4">
+      <section className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-t-[2rem] sm:rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-5 bg-slate-50/70 dark:bg-slate-900/70">
+          <div>
+            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-300">
+              <Sparkles size={18} />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em]">AI Financial Insights</p>
+            </div>
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">Portfolio observations</h3>
+            {cached && <p className="mt-1 text-xs font-bold text-slate-400">Using recently generated insights for this data.</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-2xl p-2 text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+            aria-label="Close AI insights"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="max-h-[65vh] overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <RefreshCw className="animate-spin text-indigo-600 dark:text-indigo-300" size={32} />
+              <p className="mt-4 text-sm font-bold text-slate-700 dark:text-slate-200">Analyzing financial patterns...</p>
+              <p className="mt-1 text-xs text-slate-400">This usually takes a few seconds.</p>
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+              <p className="text-sm font-bold">Could not generate insights</p>
+              <p className="mt-1 text-sm">{error}</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {insights.map((insight, index) => (
+                <article
+                  key={`${insight.title}-${index}`}
+                  className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm"
+                >
+                  <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${insightAccentClass(insight.severity)}`}>
+                    {insight.category}
+                  </span>
+                  <h4 className="mt-3 text-sm font-black text-slate-900 dark:text-slate-100">{insight.title}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{insight.summary}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4 bg-white dark:bg-slate-950">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 disabled:opacity-60 transition-all"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            Regenerate
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -158,6 +253,12 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<{ month: string; income: number; expense: number; value: number }[]>([]);
   const [propertyPerformance, setPropertyPerformance] = useState<{ propertyName: string; income: number }[]>([]);
   const [familyDistribution, setFamilyDistribution] = useState<{ name: string; value: number }[]>([]);
+  const [insightDataset, setInsightDataset] = useState<FinancialInsightDataset | null>(null);
+  const [insights, setInsights] = useState<FinancialInsight[]>([]);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [insightsCached, setInsightsCached] = useState(false);
   
   const [loading, setLoading] = useState(true);
 
@@ -212,6 +313,16 @@ export default function Dashboard() {
           
         setChartData(sortedMonthly);
 
+        const incomeCategoryMap = new Map<string, number>();
+        incomeData.forEach((income) => {
+          incomeCategoryMap.set(income.category, (incomeCategoryMap.get(income.category) || 0) + income.amount);
+        });
+
+        const expenseCategoryMap = new Map<string, number>();
+        expenseData.forEach((expense) => {
+          expenseCategoryMap.set(expense.category, (expenseCategoryMap.get(expense.category) || 0) + expense.amount);
+        });
+
         const propPerfMap = new Map<string, number>();
         incomeData.forEach(inc => {
           const property = propsList.find(p => p.id === inc.propertyId)?.name || t("other");
@@ -236,7 +347,54 @@ export default function Dashboard() {
             familyMap.set(memberName, (familyMap.get(memberName) || 0) + shareAmount);
           }
         });
-        setFamilyDistribution(Array.from(familyMap.entries()).map(([name, value]) => ({ name, value })));
+        const distributionData = Array.from(familyMap.entries()).map(([name, value]) => ({ name, value }));
+        setFamilyDistribution(distributionData);
+
+        setInsightDataset({
+          generatedForMonth: new Date().toISOString().slice(0, 7),
+          totals: {
+            income: totalIncome,
+            expenses: totalExpense,
+            net: totalIncome - totalExpense,
+          },
+          monthlyTrends: sortedMonthly.slice(-12).map((month) => ({
+            month: month.month,
+            income: month.income,
+            expense: month.expense,
+            net: month.income - month.expense,
+          })),
+          propertyPerformance: propsList.map((property) => {
+            const income = incomeData
+              .filter((entry) => entry.propertyId === property.id)
+              .reduce((sum, entry) => sum + entry.amount, 0);
+            const expense = expenseData
+              .filter((entry) => entry.propertyId === property.id)
+              .reduce((sum, entry) => sum + entry.amount, 0);
+
+            return {
+              propertyName: property.name,
+              income,
+              expense,
+              net: income - expense,
+            };
+          }).sort((a, b) => b.net - a.net),
+          equityDistribution: distributionData.map((entry) => ({
+            memberName: entry.name,
+            amount: entry.value,
+          })),
+          expenseByCategory: Array.from(expenseCategoryMap.entries())
+            .map(([category, amount]) => ({ category, amount }))
+            .sort((a, b) => b.amount - a.amount),
+          incomeByCategory: Array.from(incomeCategoryMap.entries())
+            .map(([category, amount]) => ({ category, amount }))
+            .sort((a, b) => b.amount - a.amount),
+          recentTransactions: unifiedTrans.map((transaction) => ({
+            type: transaction.type,
+            category: transaction.category,
+            amount: transaction.amount,
+            date: transaction.date.toISOString(),
+          })),
+        });
 
       } catch (error) {
         console.error("Dashboard fetch error:", error);
@@ -250,12 +408,63 @@ export default function Dashboard() {
 
   const topProperty = propertyPerformance[0]?.propertyName || "N/A";
 
+  const handleGenerateInsights = async (forceRefresh = false) => {
+    if (!insightDataset) {
+      setInsightsError("Financial data is still loading. Try again in a moment.");
+      setInsightsOpen(true);
+      return;
+    }
+
+    if (!forceRefresh && insights.length > 0) {
+      setInsightsOpen(true);
+      return;
+    }
+
+    setInsightsOpen(true);
+    setInsightsLoading(true);
+    setInsightsError(null);
+
+    try {
+      const response = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ dataset: insightDataset }),
+      });
+
+      const body = await response.json() as Partial<FinancialInsightsResponse> & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(body.error || "AI insights request failed.");
+      }
+
+      setInsights(Array.isArray(body.insights) ? body.insights : []);
+      setInsightsCached(Boolean(body.cached));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to generate AI insights.";
+      setInsightsError(message);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
   if (loading) {
     return <DashboardSkeleton />;
   }
 
   return (
     <div className="space-y-10 animate-stagger pb-12">
+      <InsightModal
+        isOpen={insightsOpen}
+        insights={insights}
+        error={insightsError}
+        loading={insightsLoading}
+        cached={insightsCached}
+        onClose={() => setInsightsOpen(false)}
+        onRefresh={() => handleGenerateInsights(true)}
+      />
+
       {/* Dynamic Header */}
       <header className="relative p-10 rounded-[3rem] bg-white dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden shadow-2xl shadow-slate-200 dark:shadow-slate-950/50 border border-slate-100 dark:border-slate-800 transition-colors">
         <div className="absolute top-0 right-0 p-12 opacity-10 dark:opacity-5 pointer-events-none">
@@ -272,6 +481,15 @@ export default function Dashboard() {
            </div>
            
            <div className="flex flex-wrap gap-4">
+              <button
+                type="button"
+                onClick={() => handleGenerateInsights(false)}
+                disabled={insightsLoading}
+                className="flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-2xl text-[13px] md:text-sm font-bold shadow-xl shadow-slate-200/70 dark:shadow-slate-950/30 transition-all active:scale-95 disabled:opacity-70"
+              >
+                 <Sparkles size={18} />
+                 {insightsLoading ? "Generating..." : "Generate AI Insights"}
+              </button>
               <Link href="/income" className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-[13px] md:text-sm text-white font-bold shadow-xl shadow-indigo-600/20 dark:shadow-indigo-900/40 transition-all active:scale-95">
                  <Plus size={18} />
                  {t("recordIncome")}
@@ -355,8 +573,7 @@ export default function Dashboard() {
                       backgroundColor: '#1e293b',
                       color: '#f8fafc'
                     }}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(value: any) => [`৳ ${Number(value).toLocaleString()}`, undefined]}
+                    formatter={(value: unknown) => [`৳ ${Number(value).toLocaleString()}`, undefined]}
                   />
                   <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
                   <Bar dataKey="income" name={t("income") || "Income"} fill="#4f46e5" radius={[6, 6, 0, 0]} maxBarSize={40} />
@@ -413,8 +630,7 @@ export default function Dashboard() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      formatter={(value: any) => [formatCurrency(Number(value)), t('share') || "Share"]}
+                      formatter={(value: unknown) => [formatCurrency(Number(value)), t('share') || "Share"]}
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.2)', backgroundColor: '#1e293b', color: '#f8fafc' }}
                     />
                   </PieChart>
